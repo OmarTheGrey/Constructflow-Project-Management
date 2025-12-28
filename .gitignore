@@ -43,6 +43,7 @@ node_modules/
 
 # Next.js
 /.next/
+/construct-flow-nextjs-frontend/.next/
 /out/
 
 # Production build
