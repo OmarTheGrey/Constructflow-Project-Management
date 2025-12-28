@@ -1,6 +1,6 @@
 <mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36" version="29.2.9">
   <diagram name="Full Chen ERD" id="full-chen-erd">
-    <mxGraphModel dx="1708" dy="703" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2000" pageHeight="2000" math="0" shadow="0">
+    <mxGraphModel dx="1971" dy="811" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2000" pageHeight="2000" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -524,7 +524,7 @@
             <mxPoint x="352.43999999999994" y="889.9999999999998" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="nE5-axfUF0xJZW3hxOjP-7" parent="1" style="strokeWidth=1;shadow=0;dashed=0;align=center;html=1;shape=mxgraph.mockup.text.stickyNote2;fontColor=#666666;mainText=;fontSize=17;whiteSpace=wrap;fillColor=#ffffcc;strokeColor=#F62E00;" value="&lt;div&gt;ALL ENTITIES INCLUDE&lt;/div&gt;created at&lt;div&gt;last_modified_at&lt;/div&gt;&lt;div&gt;version&lt;/div&gt;" vertex="1">
+        <mxCell id="nE5-axfUF0xJZW3hxOjP-7" parent="1" style="strokeWidth=1;shadow=0;dashed=0;align=center;html=1;shape=mxgraph.mockup.text.stickyNote2;fontColor=#666666;mainText=;fontSize=17;whiteSpace=wrap;fillColor=#ffffcc;strokeColor=#F62E00;" value="&lt;div&gt;ALL ENTITIES INCLUDE ATTRIBUTES:&lt;/div&gt;created at&lt;div&gt;last_modified_at&lt;/div&gt;&lt;div&gt;version&lt;/div&gt;" vertex="1">
           <mxGeometry height="140" width="250" x="870" y="190" as="geometry" />
         </mxCell>
       </root>
