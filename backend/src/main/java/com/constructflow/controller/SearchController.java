@@ -1,0 +1,21 @@
+package com.constructflow.controller;
+
+import com.constructflow.service.SearchService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
+
+@RestController
+@RequestMapping("/api/search")
+@RequiredArgsConstructor
+@CrossOrigin(origins = "*")
+public class SearchController {
+    private final SearchService searchService;
+
+    @GetMapping
+    public ResponseEntity<Map<String, Object>> search(@RequestParam String q) {
+        return ResponseEntity.ok(searchService.globalSearch(q));
+    }
+}

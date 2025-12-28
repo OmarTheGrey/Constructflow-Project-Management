@@ -1,0 +1,22 @@
+1:"$Sreact.fragment"
+2:I[20746,["/_next/static/chunks/1449325365d1316e.js"],"default"]
+3:I[33104,["/_next/static/chunks/1449325365d1316e.js"],"default"]
+4:I[23938,["/_next/static/chunks/441968e0e1e86d15.js"],"Analytics"]
+5:I[16448,["/_next/static/chunks/1449325365d1316e.js"],"ClientPageRoot"]
+6:I[49091,["/_next/static/chunks/441968e0e1e86d15.js","/_next/static/chunks/436ce2487fe3d46d.js"],"default"]
+9:I[92765,["/_next/static/chunks/1449325365d1316e.js"],"OutletBoundary"]
+a:"$Sreact.suspense"
+c:I[92765,["/_next/static/chunks/1449325365d1316e.js"],"ViewportBoundary"]
+e:I[92765,["/_next/static/chunks/1449325365d1316e.js"],"MetadataBoundary"]
+10:I[65880,["/_next/static/chunks/1449325365d1316e.js"],"default"]
+:HL["/_next/static/chunks/d556a18f33e392d9.css","style"]
+:HL["/_next/static/chunks/23fbe9f79547a40e.css","style"]
+:HL["/_next/static/media/797e433ab948586e-s.p.dbea232f.woff2","font",{"crossOrigin":"","type":"font/woff2"}]
+:HL["/_next/static/media/caa3a2e1cccd8315-s.p.853070df.woff2","font",{"crossOrigin":"","type":"font/woff2"}]
+:HL["/_next/static/media/dc6d2a64e9dbf3bc-s.p.4b9eb7a1.woff2","font",{"crossOrigin":"","type":"font/woff2"}]
+0:{"P":null,"b":"z0xWg1I5sa-5xBe6bBfNy","c":["",""],"q":"","i":false,"f":[[["",{"children":["__PAGE__",{}]},"$undefined","$undefined",true],[["$","$1","c",{"children":[[["$","link","0",{"rel":"stylesheet","href":"/_next/static/chunks/d556a18f33e392d9.css","precedence":"next","crossOrigin":"$undefined","nonce":"$undefined"}],["$","link","1",{"rel":"stylesheet","href":"/_next/static/chunks/23fbe9f79547a40e.css","precedence":"next","crossOrigin":"$undefined","nonce":"$undefined"}],["$","script","script-0",{"src":"/_next/static/chunks/441968e0e1e86d15.js","async":true,"nonce":"$undefined"}]],["$","html",null,{"lang":"en","children":["$","body",null,{"className":"font-sans antialiased","children":[["$","$L2",null,{"parallelRouterKey":"children","error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L3",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":[[["$","title",null,{"children":"404: This page could not be found."}],["$","div",null,{"style":{"fontFamily":"system-ui,\"Segoe UI\",Roboto,Helvetica,Arial,sans-serif,\"Apple Color Emoji\",\"Segoe UI Emoji\"","height":"100vh","textAlign":"center","display":"flex","flexDirection":"column","alignItems":"center","justifyContent":"center"},"children":["$","div",null,{"children":[["$","style",null,{"dangerouslySetInnerHTML":{"__html":"body{color:#000;background:#fff;margin:0}.next-error-h1{border-right:1px solid rgba(0,0,0,.3)}@media (prefers-color-scheme:dark){body{color:#fff;background:#000}.next-error-h1{border-right:1px solid rgba(255,255,255,.3)}}"}}],["$","h1",null,{"className":"next-error-h1","style":{"display":"inline-block","margin":"0 20px 0 0","padding":"0 23px 0 0","fontSize":24,"fontWeight":500,"verticalAlign":"top","lineHeight":"49px"},"children":404}],["$","div",null,{"style":{"display":"inline-block"},"children":["$","h2",null,{"style":{"fontSize":14,"fontWeight":400,"lineHeight":"49px","margin":0},"children":"This page could not be found."}]}]]}]}]],[]],"forbidden":"$undefined","unauthorized":"$undefined"}],["$","$L4",null,{}]]}]}]]}],{"children":[["$","$1","c",{"children":[["$","$L5",null,{"Component":"$6","serverProvidedParams":{"searchParams":{},"params":{},"promises":["$@7","$@8"]}}],[["$","script","script-0",{"src":"/_next/static/chunks/436ce2487fe3d46d.js","async":true,"nonce":"$undefined"}]],["$","$L9",null,{"children":["$","$a",null,{"name":"Next.MetadataOutlet","children":"$@b"}]}]]}],{},null,false,false]},null,false,false],["$","$1","h",{"children":[null,["$","$Lc",null,{"children":"$@d"}],["$","div",null,{"hidden":true,"children":["$","$Le",null,{"children":["$","$a",null,{"name":"Next.Metadata","children":"$@f"}]}]}],["$","meta",null,{"name":"next-size-adjust","content":""}]]}],false]],"m":"$undefined","G":["$10",[]],"S":true}
+7:{}
+8:"$0:f:0:1:1:children:0:props:children:0:props:serverProvidedParams:params"
+d:[["$","meta","0",{"charSet":"utf-8"}],["$","meta","1",{"name":"viewport","content":"width=device-width, initial-scale=1"}]]
+f:[["$","title","0",{"children":"ConstructFlow - Project Management"}],["$","meta","1",{"name":"description","content":"Professional construction project management system"}],["$","meta","2",{"name":"generator","content":"v0.app"}]]
+b:null
