@@ -172,7 +172,10 @@ tasks (1) ----< (N) daily_logs
 tasks (1) ----< (N) work_logs
 projects (1) ----< (N) stakeholders
 projects (1) ----< (N) documents
+
 ```
+![ERD](Models_Reports/ERD_FINAL.png)
+
 
 ### Tables
 
