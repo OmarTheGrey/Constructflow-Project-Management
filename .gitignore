@@ -235,6 +235,12 @@ reports/
 # Test data
 test-data/
 
+# Coursework artefacts (local only)
+/*.pdf
+docs/DELIVERABLE*_PLAN.md
+docs/DELIVERABLE*_REPORT.md
+docs/DELIVERABLE*_REPORT.pdf
+
 # ===============================
 # Misc
 # ===============================
