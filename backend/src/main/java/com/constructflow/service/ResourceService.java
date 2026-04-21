@@ -8,6 +8,8 @@ import com.constructflow.repository.ResourceRepository;
 import com.constructflow.repository.TaskAllocationRepository;
 import com.constructflow.service.factory.ResourceFactory;
 import com.constructflow.service.mapping.ResourceMapper;
+import com.constructflow.service.observer.Activity;
+import com.constructflow.service.observer.ActivityHub;
 import com.constructflow.service.template.allocation.AllocationRequest;
 import com.constructflow.service.template.allocation.AllocationValidatorRegistry;
 import lombok.RequiredArgsConstructor;
@@ -47,6 +49,8 @@ public class ResourceService {
         allocation.setQuantityAllocated(quantity);
         allocation.setAllocatedAt(java.time.LocalDateTime.now());
         taskAllocationRepository.save(allocation);
+
+        ActivityHub.INSTANCE.publish(new Activity.ResourceAllocated(taskId, resourceId, quantity));
     }
 
     private String resolveCategoryFor(UUID resourceId) {

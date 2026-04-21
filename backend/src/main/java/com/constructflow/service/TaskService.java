@@ -8,6 +8,8 @@ import com.constructflow.repository.TaskRepository;
 import com.constructflow.service.events.TaskMutatedEvent;
 import com.constructflow.service.factory.TaskFactory;
 import com.constructflow.service.mapping.TaskMapper;
+import com.constructflow.service.observer.Activity;
+import com.constructflow.service.observer.ActivityHub;
 import com.constructflow.service.strategy.prioritisation.PrioritisationKey;
 import com.constructflow.service.strategy.prioritisation.PrioritisationStrategyResolver;
 import lombok.RequiredArgsConstructor;
@@ -44,6 +46,7 @@ public class TaskService {
     public TaskResponseDTO createTask(TaskRequestDTO dto) {
         Task saved = taskRepository.save(taskFactory.create(dto));
         eventPublisher.publishEvent(new TaskMutatedEvent(saved.getProjectId()));
+        ActivityHub.INSTANCE.publish(new Activity.TaskCreated(saved.getId(), saved.getProjectId(), saved.getName()));
         return taskMapper.toResponse(saved);
     }
 
@@ -54,6 +57,10 @@ public class TaskService {
         taskFactory.apply(task, dto);
         Task updated = taskRepository.save(task);
         eventPublisher.publishEvent(new TaskMutatedEvent(updated.getProjectId()));
+        if ("Completed".equalsIgnoreCase(updated.getStatus())) {
+            ActivityHub.INSTANCE.publish(
+                    new Activity.TaskCompleted(updated.getId(), updated.getProjectId(), updated.getName()));
+        }
         return taskMapper.toResponse(updated);
     }
 

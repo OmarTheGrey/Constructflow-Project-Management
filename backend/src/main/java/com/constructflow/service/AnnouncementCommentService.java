@@ -8,6 +8,8 @@ import com.constructflow.model.AnnouncementComment;
 import com.constructflow.repository.AnnouncementCommentRepository;
 import com.constructflow.repository.AnnouncementRepository;
 import com.constructflow.service.mapping.AnnouncementMapper;
+import com.constructflow.service.observer.Activity;
+import com.constructflow.service.observer.ActivityHub;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,7 +40,10 @@ public class AnnouncementCommentService {
         comment.setAnnouncement(announcement);
         comment.setAuthor(dto.getAuthor());
         comment.setContent(dto.getContent());
-        return announcementMapper.toCommentResponse(commentRepository.save(comment));
+        AnnouncementComment saved = commentRepository.save(comment);
+        ActivityHub.INSTANCE.publish(
+                new Activity.CommentPosted(announcementId, saved.getId(), saved.getAuthor()));
+        return announcementMapper.toCommentResponse(saved);
     }
 
     @Transactional
