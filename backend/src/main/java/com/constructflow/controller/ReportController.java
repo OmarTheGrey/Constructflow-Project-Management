@@ -1,13 +1,13 @@
 package com.constructflow.controller;
 
 import com.constructflow.dto.ExecutiveSummaryDTO;
-import com.constructflow.service.GlobalReportService;
+import com.constructflow.service.ReportService;
+import com.constructflow.service.factory.report.ReportKind;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/reports")
@@ -15,10 +15,15 @@ import org.springframework.web.bind.annotation.RestController;
 @CrossOrigin(origins = "*")
 public class ReportController {
 
-    private final GlobalReportService reportService;
+    private final ReportService reportService;
 
     @GetMapping("/summary")
     public ResponseEntity<ExecutiveSummaryDTO> getExecutiveSummary() {
-        return ResponseEntity.ok(reportService.generateExecutiveSummary());
+        return ResponseEntity.ok(reportService.executiveSummary());
+    }
+
+    @GetMapping("/{kind}")
+    public ResponseEntity<Map<String, Object>> getReport(@PathVariable ReportKind kind) {
+        return ResponseEntity.ok(reportService.build(kind));
     }
 }
