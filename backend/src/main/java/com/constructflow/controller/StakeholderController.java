@@ -15,7 +15,6 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/stakeholders")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 public class StakeholderController {
     private final StakeholderService stakeholderService;
 

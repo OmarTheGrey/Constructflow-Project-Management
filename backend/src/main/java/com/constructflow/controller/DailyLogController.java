@@ -15,7 +15,6 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/logs")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 public class DailyLogController {
     private final DailyLogService dailyLogService;
 

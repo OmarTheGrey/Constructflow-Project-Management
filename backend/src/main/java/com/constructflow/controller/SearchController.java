@@ -10,7 +10,6 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/search")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 public class SearchController {
     private final SearchService searchService;
 

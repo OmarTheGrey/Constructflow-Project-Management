@@ -10,6 +10,8 @@ import com.constructflow.repository.TaskAllocationRepository;
 import com.constructflow.service.factory.ResourceFactory;
 import com.constructflow.service.mapping.ResourceMapper;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -20,6 +22,7 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class ResourceService {
+    private static final Logger log = LoggerFactory.getLogger(ResourceService.class);
     private final ResourceRepository resourceRepository;
     private final TaskAllocationRepository taskAllocationRepository;
     private final ResourceMapper resourceMapper;
@@ -51,6 +54,7 @@ public class ResourceService {
                 .orElseThrow(() -> new ResourceNotFoundException("Resource", resourceId));
         resource.setQuantity(resource.getQuantity() + quantityChange);
         resourceRepository.save(resource);
+        log.info("Inventory updated: resource='{}' change={} reason='{}'", resource.getName(), quantityChange, reason);
     }
 
     public Page<ResourceResponseDTO> getAllResources(Pageable pageable) {

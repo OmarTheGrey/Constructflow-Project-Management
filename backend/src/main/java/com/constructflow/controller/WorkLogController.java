@@ -15,7 +15,6 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/work-logs")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 public class WorkLogController {
     private final WorkLogService workLogService;
 

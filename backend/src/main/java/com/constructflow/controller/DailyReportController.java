@@ -15,7 +15,6 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/daily-reports")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 public class DailyReportController {
     private final DailyReportService dailyReportService;
 

@@ -18,7 +18,6 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/announcements")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 public class AnnouncementController {
     private final AnnouncementService announcementService;
     private final AnnouncementCommentService commentService;
