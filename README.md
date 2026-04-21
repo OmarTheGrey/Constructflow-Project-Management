@@ -182,6 +182,82 @@ Two nullable columns were added to existing tables (Hibernate DDL auto-update ha
 
 ---
 
+## 🎭 Behavioural Design Patterns
+
+A second pattern pass added five behavioural patterns on top of the earlier structural/creational work. Every diagram — source and rendered PNG — lives in [`docs/uml/`](docs/uml/) with a per-pattern explainer.
+
+### What changed at a glance
+
+| Pattern | Case | Where |
+|---|---|---|
+| **Template Method** | Document export pipeline | `service/template/export/` — `AbstractDocumentExporter` with PDF/CSV/ZIP subclasses |
+| **Template Method** | Resource-allocation validation | `service/template/allocation/` — `AbstractAllocationValidator` with Material/Equipment/Labor subclasses |
+| **Mediator** | Resource-allocation workflow | `service/mediator/allocation/` — `DefaultAllocationMediator` sequences four colleagues |
+| **Mediator** | Announcement discussion room | `service/mediator/discussion/` — `AnnouncementRoom` fans out to participants |
+| **Strategy** | Project-progress calculation | `service/strategy/progress/` — 4 interchangeable strategies keyed by `ProgressModel` |
+| **Strategy** | Critical-task prioritisation | `service/strategy/prioritisation/` — 4 interchangeable sort orders keyed by `PrioritisationKey` |
+| **Observer + Singleton** | Global activity stream | `service/observer/` — enum-based `ActivityHub` with 3 default observers |
+| **Iterator** | Lazy DB traversal | `service/iteration/` — already delivered in the earlier refactor; documented here for completeness |
+
+### Highlights
+
+- **Template Method (exports)** — `DocumentController` gains `GET /api/documents/{id}/export?format=PDF|CSV|ZIP`. Adding a new format is one new `@Component` plus one enum entry; the controller and resolver never change.
+- **Template Method (validation)** — `ResourceService.allocateResource` no longer holds validation logic. `AllocationValidatorRegistry` dispatches to `Material`/`Equipment`/`Labor` subclasses, each enforcing the category-specific rule inside the shared skeleton.
+- **Mediator (allocation)** — `DefaultAllocationMediator` orchestrates the reserve → record → broadcast → audit workflow across four colleague components (`Resource`, `TaskAllocation`, `Notification`, `Audit`). Colleagues don't reference one another.
+- **Mediator (discussion)** — `AnnouncementRoom` implements the classic chat-room pattern: posting a comment fans out to `AuthorParticipant`, `DashboardParticipant`, and `ActivityRelayParticipant` (which re-broadcasts to the global hub). `AnnouncementCommentService.addComment` is a single mediator call.
+- **Strategy (progress)** — `Project.progressModel` chooses between `TASK_COUNT`, `WEIGHTED_BY_COST`, `MILESTONE_BASED`, and `EFFORT_BASED` at runtime. `ProjectService.updateProjectProgress` delegates to the resolved strategy.
+- **Strategy (prioritisation)** — `GET /api/tasks/critical?sortBy={DUE_DATE|COST_DESC|RISK|DEPENDENCIES}` picks an ordering algorithm at request time. The `RiskWeightedPrioritisationStrategy` blends urgency, cost, and dependency fan-out into a composite score.
+- **Observer + Singleton** — `ActivityHub` is an enum-based singleton (Effective Java, Item 3) — JVM-guaranteed single instance, thread-safe, reflection-proof, serialisation-safe. Three observers ship: `AuditLogObserver`, `DashboardCounterObserver`, and `OverdueAlertObserver`. Services publish `TaskCreated`, `TaskCompleted`, `ResourceAllocated`, and `CommentPosted` activities. `ActivityHubTest` covers both the singleton invariants and the observer contract.
+
+### New packages added
+
+```
+service/
+├── template/
+│   ├── export/      AbstractDocumentExporter, Pdf/Csv/Zip exporters,
+│   │                DocumentExporterResolver, ExportFormat, ExportRequest, ExportResult
+│   └── allocation/  AbstractAllocationValidator, Material/Equipment/Labor validators,
+│                    AllocationValidatorRegistry, AllocationRequest
+├── mediator/
+│   ├── allocation/  AllocationMediator, DefaultAllocationMediator,
+│   │                ResourceColleague, TaskAllocationColleague,
+│   │                NotificationColleague, AuditColleague, AllocationCommand
+│   └── discussion/  DiscussionRoomMediator, AnnouncementRoom, Participant,
+│                    AuthorParticipant, DashboardParticipant, ActivityRelayParticipant
+├── strategy/
+│   ├── progress/    ProgressStrategy + 4 implementations, ProgressStrategyResolver,
+│   │                ProgressModel enum
+│   └── prioritisation/
+│                    PrioritisationStrategy + 4 implementations,
+│                    PrioritisationStrategyResolver, PrioritisationKey enum
+└── observer/        ActivityHub (enum singleton), ActivityObserver,
+                     Activity (sealed) + 5 record variants,
+                     AuditLogObserver, DashboardCounterObserver, OverdueAlertObserver
+```
+
+### New API endpoints
+
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/api/documents/{id}/export?format=PDF\|CSV\|ZIP` | Run the document through the Template-Method export pipeline |
+| `GET` | `/api/tasks/critical?sortBy=DUE_DATE\|COST_DESC\|RISK\|DEPENDENCIES` | Return critical tasks ordered by the chosen Strategy |
+
+### Database changes
+
+One nullable column added (Hibernate DDL auto-update applies it on startup):
+
+| Table | Column | Purpose |
+|---|---|---|
+| `projects` | `progress_model` (VARCHAR, nullable, enum `ProgressModel`) | Lets each project pick its own progress Strategy |
+
+### Tests
+
+- [`ActivityHubTest`](backend/src/test/java/com/constructflow/service/observer/ActivityHubTest.java) — 9 cases covering singleton identity, reflection resistance, serialisation round-trip, fan-out, unsubscribe semantics, and isolation from a misbehaving observer.
+
+Run with `mvn test -Dtest=ActivityHubTest` inside `backend/`.
+
+---
+
 ## 🛠 Tech Stack
 
 ### Backend
@@ -427,6 +503,7 @@ http://localhost:8080/api
 - `GET /tasks/{id}` - Get task by ID
 - `GET /tasks/project/{projectId}` - Get tasks for project
 - `GET /tasks/critical` - Get all critical priority tasks
+- `GET /tasks/critical?sortBy={DUE_DATE|COST_DESC|RISK|DEPENDENCIES}` - Critical tasks ordered by a selectable strategy
 - `POST /tasks` - Create new task
 - `PUT /tasks/{id}` - Update task
 - `DELETE /tasks/{id}` - Delete task
@@ -458,9 +535,10 @@ http://localhost:8080/api
 - `GET /reports/FINANCIAL` - Financial report (Abstract Factory)
 
 #### Documents
-- `GET /documents` - List all documents
-- `POST /documents` - Upload document
-- `DELETE /documents/{id}` - Delete document
+- `GET /documents/project/{projectId}` - List documents for a project
+- `POST /documents` - Upload document (multipart)
+- `GET /documents/{id}/export?format={PDF|CSV|ZIP}` - Export a document through the pluggable exporter pipeline
+- `DELETE /documents/{id}` - Delete document (also removes the physical file via the storage adapter)
 
 ---
 
@@ -634,6 +712,16 @@ This project is under the standard MIT License.
 ---
 
 ## 🎉 Recent Updates
+
+### Version 0.0.5 - Behavioural Design Patterns
+- 🧩 **Template Method**: `AbstractDocumentExporter` (PDF/CSV/ZIP) + `AbstractAllocationValidator` (Material/Equipment/Labor)
+- 🚦 **Mediator**: `DefaultAllocationMediator` orchestrates allocation across four colleagues; `AnnouncementRoom` fans comments out to participants
+- 🎚️ **Strategy**: 4 interchangeable project-progress models + 4 critical-task sort orders chosen at runtime
+- 🛰️ **Observer + Singleton**: enum-based `ActivityHub` with `AuditLog`, `DashboardCounter`, and `OverdueAlert` observers
+- 🆕 **New endpoints**: `GET /api/documents/{id}/export?format=…`, `GET /api/tasks/critical?sortBy=…`
+- 🗄️ **New column**: `projects.progress_model` (enum) — per-project progress strategy selection
+- 🧪 **Tests**: `ActivityHubTest` locks down the singleton invariants (reflection-proof, serialisation-safe) and the observer fan-out contract
+- 📐 **Diagrams**: PlantUML sources + rendered PNGs + per-pattern explainer in [`docs/uml/`](docs/uml/)
 
 ### Version 0.0.4 - SOLID Refactor & Design Patterns
 - 🏛 Full SOLID compliance audit and remediation (13 violations closed)
