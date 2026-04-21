@@ -33,8 +33,7 @@
       - [12.11 Strategy — Critical-Task Prioritisation](#1211-strategy--critical-task-prioritisation)
       - [12.12 Observer + Singleton — Global Activity Hub](#1212-observer--singleton--global-activity-hub)
 13. [Final Package Structure](#13-final-package-structure)
-14. [Migration Log](#14-migration-log)
-15. [Testing](#15-testing)
+14. [Testing](#14-testing)
 
 ---
 
@@ -223,7 +222,7 @@ Next.js 16 App Router app in [construct-flow-nextjs-frontend/](../construct-flow
 
 ## 11. SOLID Audit — Violations Addressed
 
-Every finding below was resolved as part of Phase 1. Commit references are in [section 14](#14-migration-log).
+Every finding below was resolved as part of Phase 1.
 
 | # | Principle | Original location | Violation | Resolution |
 |---|---|---|---|---|
@@ -720,41 +719,9 @@ com.constructflow
 
 ---
 
-## 14. Migration Log
+## 14. Testing
 
-### Phase 1 — Creational & Structural (10 commits)
-
-| Step | Commit | What changed | SOLID findings closed |
-|---|---|---|---|
-| 1 | `a8c01e6` | Added `ResourceNotFoundException`, `InsufficientResourceException`, `DomainValidationException`; enriched `GlobalExceptionHandler` with 404/422/400 handlers; replaced all `throw new RuntimeException(...)` in services | #12 |
-| 2 | `55bfd80` | Created `service/mapping/` with 9 `XxxMapper` components; removed every `mapToResponseDTO` / `convertToResponseDTO` from all 13 services | #4 |
-| 3 | `f428e3a` | Introduced `EntityFactory<E,D>` + `TaskFactory`, `ProjectFactory`, `ResourceFactory`; services call `factory.create()` and `factory.apply()` | #1 (partial), #3 (partial) |
-| 4 | `a0d50b3` | Added `DocumentStorage` port + `LocalFileSystemStorageAdapter`; `StorageProperties` externalised upload path; `Document.storageKey` added; `deleteDocument` now removes the physical file | #2, #10, #13 (partial) |
-| 5 | `daa0e8a` | `TaskMutatedEvent` + `ProgressRecalculator @TransactionalEventListener`; `TaskService` removed its `ProjectService` import entirely | #9 |
-| 6 | `85dcf06` | `PagedRepositoryIterator<T>`, `ProjectScanner`, `ProjectTaskTreeIterator`; `GlobalReportService` and `AnalyticsService` rewritten to use iterators instead of `findAll()` | #3 (partial), #6 |
-| 7 | `0686f86` | `ReportArtifactFactory` + `ExecutiveReportFactory`, `ProjectReportFactory`, `FinancialReportFactory`; `ReportService` dispatcher; `GET /api/reports/{kind}` endpoint | #5 |
-| 8 | `a251517` | `WorkItem`, `LeafTask`, `CompositeTask`, `WorkItemVisitor`; `parentTaskId` added to `Task`; `TaskTreeBuilder`; `ProjectService.updateProjectProgress` delegates to composite tree | OCP/SRP on progress aggregation |
-| 9 | `caf7fa2` | Removed all per-controller `@CrossOrigin("*")`; CORS origins driven by `AppProperties`; `System.out.println` replaced with SLF4J `log.info` | #11, #13 (partial) |
-| 10 | `75d2fe5` | All hard-coded status strings (`"Active"`, `"In Progress"`, `"Completed"`) replaced with `AppProperties.status.*` injected via constructor | #13 |
-
-### Phase 2 — Behavioural (8 commits)
-
-| Step | Commit | What changed |
-|---|---|---|
-| 1 | `63c77ab` | Template Method — `AbstractDocumentExporter` + PDF/CSV/ZIP subclasses + resolver; `GET /api/documents/{id}/export?format=...` |
-| 2 | `da7a126` | Template Method — `AbstractAllocationValidator` + Material/Equipment/Labor subclasses + registry; `ResourceService` delegates to the registry |
-| 3 | `4faf155` | Strategy — `ProgressStrategy` + 4 implementations + resolver; `Project.progressModel` column; `ProjectService.updateProjectProgress` delegates |
-| 4 | `35ae7bc` | Strategy — `PrioritisationStrategy` + 4 implementations + resolver; `GET /api/tasks/critical?sortBy=...` |
-| 5 | `af7b93e` | Observer + Singleton — enum-based `ActivityHub` + `Activity` sealed variants + 3 observers + 9-case `ActivityHubTest` |
-| 6 | `64bb549` | Mediator — `AllocationMediator` + 4 colleagues; `ResourceService.allocateResource` collapses to a single mediator call |
-| 7 | `4cb5814` | Mediator — `DiscussionRoomMediator` / `AnnouncementRoom` + 3 participants; `AnnouncementCommentService` forwards to the mediator |
-| 8 | `b535c20`, `d1d7039` | PlantUML sources for all eight diagrams; syntax fixes; rendered PNGs; per-diagram explainer in `docs/uml/README.md` |
-
----
-
-## 15. Testing
-
-### 15.1 `ActivityHubTest`
+### 14.1 `ActivityHubTest`
 
 [`backend/src/test/java/com/constructflow/service/observer/ActivityHubTest.java`](../backend/src/test/java/com/constructflow/service/observer/ActivityHubTest.java) runs under JUnit 5 (included via `spring-boot-starter-test`). Nine cases cover both the Singleton invariants and the Observer contract:
 
@@ -776,7 +743,7 @@ cd backend
 mvn test -Dtest=ActivityHubTest
 ```
 
-### 15.2 Future testing
+### 14.2 Future testing
 
 Not in scope for this phase but worth tracking:
 
