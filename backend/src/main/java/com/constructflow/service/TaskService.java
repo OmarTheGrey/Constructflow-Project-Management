@@ -5,6 +5,7 @@ import com.constructflow.dto.TaskResponseDTO;
 import com.constructflow.exception.ResourceNotFoundException;
 import com.constructflow.model.Task;
 import com.constructflow.repository.TaskRepository;
+import com.constructflow.service.mapping.TaskMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -20,15 +21,15 @@ import java.util.stream.Collectors;
 public class TaskService {
     private final TaskRepository taskRepository;
     private final ProjectService projectService;
+    private final TaskMapper taskMapper;
 
     public Page<TaskResponseDTO> getAllTasks(Pageable pageable) {
-        return taskRepository.findAll(pageable)
-                .map(this::mapToResponseDTO);
+        return taskRepository.findAll(pageable).map(taskMapper::toResponse);
     }
 
     public List<TaskResponseDTO> getTasksByProject(UUID projectId) {
         return taskRepository.findByProjectId(projectId).stream()
-                .map(this::mapToResponseDTO)
+                .map(taskMapper::toResponse)
                 .collect(Collectors.toList());
     }
 
@@ -43,38 +44,29 @@ public class TaskService {
         task.setPriority(dto.getPriority() != null ? dto.getPriority() : "Normal");
         task.setDescription(dto.getDescription());
         task.setActualCost(dto.getActualCost());
-        task.setDependencies(dto.getDependencies()); // Added
+        task.setDependencies(dto.getDependencies());
 
-        Task savedTask = taskRepository.save(task);
+        Task saved = taskRepository.save(task);
         projectService.updateProjectProgress(dto.getProjectId());
-        return mapToResponseDTO(savedTask);
+        return taskMapper.toResponse(saved);
     }
 
     @Transactional
     public TaskResponseDTO updateTask(UUID id, TaskRequestDTO dto) {
         Task task = taskRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Task not found"));
+        if (dto.getName() != null)         task.setName(dto.getName());
+        if (dto.getAssignee() != null)     task.setAssignee(dto.getAssignee());
+        if (dto.getDueDate() != null)      task.setDueDate(dto.getDueDate());
+        if (dto.getStatus() != null)       task.setStatus(dto.getStatus());
+        if (dto.getPriority() != null)     task.setPriority(dto.getPriority());
+        if (dto.getDescription() != null)  task.setDescription(dto.getDescription());
+        if (dto.getActualCost() != null)   task.setActualCost(dto.getActualCost());
+        if (dto.getDependencies() != null) task.setDependencies(dto.getDependencies());
 
-        if (dto.getName() != null)
-            task.setName(dto.getName());
-        if (dto.getAssignee() != null)
-            task.setAssignee(dto.getAssignee());
-        if (dto.getDueDate() != null)
-            task.setDueDate(dto.getDueDate());
-        if (dto.getStatus() != null)
-            task.setStatus(dto.getStatus());
-        if (dto.getPriority() != null)
-            task.setPriority(dto.getPriority());
-        if (dto.getDescription() != null)
-            task.setDescription(dto.getDescription());
-        if (dto.getActualCost() != null)
-            task.setActualCost(dto.getActualCost());
-        if (dto.getDependencies() != null)
-            task.setDependencies(dto.getDependencies());
-
-        Task updatedTask = taskRepository.save(task);
+        Task updated = taskRepository.save(task);
         projectService.updateProjectProgress(task.getProjectId());
-        return mapToResponseDTO(updatedTask);
+        return taskMapper.toResponse(updated);
     }
 
     @Transactional
@@ -90,29 +82,13 @@ public class TaskService {
     @Transactional(readOnly = true)
     public List<TaskResponseDTO> searchTasks(String query) {
         return taskRepository.findByNameContainingIgnoreCase(query).stream()
-                .map(this::mapToResponseDTO)
+                .map(taskMapper::toResponse)
                 .collect(Collectors.toList());
     }
 
     public List<TaskResponseDTO> getCriticalTasks() {
         return taskRepository.findCriticalTasks().stream()
-                .map(this::mapToResponseDTO)
+                .map(taskMapper::toResponse)
                 .collect(Collectors.toList());
-    }
-
-    private TaskResponseDTO mapToResponseDTO(Task t) {
-        TaskResponseDTO dto = new TaskResponseDTO();
-        dto.setId(t.getId());
-        dto.setName(t.getName());
-        dto.setProjectId(t.getProjectId());
-        dto.setAssignee(t.getAssignee());
-        dto.setDueDate(t.getDueDate());
-        dto.setStatus(t.getStatus());
-        dto.setPriority(t.getPriority());
-        dto.setDescription(t.getDescription());
-        dto.setActualCost(t.getActualCost());
-        dto.setCreatedAt(t.getCreatedAt());
-        dto.setDependencies(t.getDependencies()); // Added
-        return dto;
     }
 }

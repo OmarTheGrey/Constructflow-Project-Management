@@ -4,6 +4,7 @@ import com.constructflow.dto.DailyReportRequestDTO;
 import com.constructflow.dto.DailyReportResponseDTO;
 import com.constructflow.model.DailyReport;
 import com.constructflow.repository.DailyReportRepository;
+import com.constructflow.service.mapping.DailyReportMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,10 +17,11 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class DailyReportService {
     private final DailyReportRepository dailyReportRepository;
+    private final DailyReportMapper dailyReportMapper;
 
     public List<DailyReportResponseDTO> getReportsByProject(UUID projectId) {
         return dailyReportRepository.findByProjectId(projectId).stream()
-                .map(this::mapToResponseDTO)
+                .map(dailyReportMapper::toResponse)
                 .collect(Collectors.toList());
     }
 
@@ -32,19 +34,6 @@ public class DailyReportService {
         report.setPhotos(dto.getPhotos());
         report.setCompletionPercentage(dto.getCompletionPercentage());
         report.setSubmittedBy(dto.getSubmittedBy());
-        return mapToResponseDTO(dailyReportRepository.save(report));
-    }
-
-    private DailyReportResponseDTO mapToResponseDTO(DailyReport report) {
-        DailyReportResponseDTO dto = new DailyReportResponseDTO();
-        dto.setId(report.getId());
-        dto.setProjectId(report.getProjectId());
-        dto.setActivities(report.getActivities());
-        dto.setIssues(report.getIssues());
-        dto.setPhotos(report.getPhotos());
-        dto.setCompletionPercentage(report.getCompletionPercentage());
-        dto.setSubmittedBy(report.getSubmittedBy());
-        dto.setCreatedAt(report.getCreatedAt());
-        return dto;
+        return dailyReportMapper.toResponse(dailyReportRepository.save(report));
     }
 }

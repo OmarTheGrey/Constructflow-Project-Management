@@ -4,6 +4,7 @@ import com.constructflow.dto.StakeholderRequestDTO;
 import com.constructflow.dto.StakeholderResponseDTO;
 import com.constructflow.model.Stakeholder;
 import com.constructflow.repository.StakeholderRepository;
+import com.constructflow.service.mapping.StakeholderMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,10 +16,11 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class StakeholderService {
     private final StakeholderRepository stakeholderRepository;
+    private final StakeholderMapper stakeholderMapper;
 
     public List<StakeholderResponseDTO> getStakeholdersByProject(UUID projectId) {
         return stakeholderRepository.findByProjectId(projectId).stream()
-                .map(this::convertToResponseDTO)
+                .map(stakeholderMapper::toResponse)
                 .toList();
     }
 
@@ -31,21 +33,7 @@ public class StakeholderService {
         stakeholder.setEmail(dto.getEmail());
         stakeholder.setPhone(dto.getPhone());
         stakeholder.setProjectId(dto.getProjectId());
-        
-        Stakeholder saved = stakeholderRepository.save(stakeholder);
-        return convertToResponseDTO(saved);
-    }
-
-    private StakeholderResponseDTO convertToResponseDTO(Stakeholder entity) {
-        StakeholderResponseDTO dto = new StakeholderResponseDTO();
-        dto.setId(entity.getId());
-        dto.setName(entity.getName());
-        dto.setRole(entity.getRole());
-        dto.setCompany(entity.getCompany());
-        dto.setEmail(entity.getEmail());
-        dto.setPhone(entity.getPhone());
-        dto.setProjectId(entity.getProjectId());
-        return dto;
+        return stakeholderMapper.toResponse(stakeholderRepository.save(stakeholder));
     }
 
     @Transactional

@@ -4,6 +4,7 @@ import com.constructflow.dto.WorkLogRequestDTO;
 import com.constructflow.dto.WorkLogResponseDTO;
 import com.constructflow.model.WorkLog;
 import com.constructflow.repository.WorkLogRepository;
+import com.constructflow.service.mapping.WorkLogMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,10 +17,11 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class WorkLogService {
     private final WorkLogRepository workLogRepository;
+    private final WorkLogMapper workLogMapper;
 
     public List<WorkLogResponseDTO> getLogsByTask(UUID taskId) {
         return workLogRepository.findByTaskId(taskId).stream()
-                .map(this::mapToResponseDTO)
+                .map(workLogMapper::toResponse)
                 .collect(Collectors.toList());
     }
 
@@ -31,18 +33,6 @@ public class WorkLogService {
         log.setNotes(dto.getNotes());
         log.setDate(dto.getDate());
         log.setSubmittedBy(dto.getSubmittedBy());
-        return mapToResponseDTO(workLogRepository.save(log));
-    }
-
-    private WorkLogResponseDTO mapToResponseDTO(WorkLog log) {
-        WorkLogResponseDTO dto = new WorkLogResponseDTO();
-        dto.setId(log.getId());
-        dto.setTaskId(log.getTaskId());
-        dto.setHours(log.getHours());
-        dto.setNotes(log.getNotes());
-        dto.setDate(log.getDate());
-        dto.setSubmittedBy(log.getSubmittedBy());
-        dto.setCreatedAt(log.getCreatedAt());
-        return dto;
+        return workLogMapper.toResponse(workLogRepository.save(log));
     }
 }

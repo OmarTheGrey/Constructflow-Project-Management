@@ -4,6 +4,7 @@ import com.constructflow.dto.AnnouncementRequestDTO;
 import com.constructflow.dto.AnnouncementResponseDTO;
 import com.constructflow.model.Announcement;
 import com.constructflow.repository.AnnouncementRepository;
+import com.constructflow.service.mapping.AnnouncementMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,10 +17,11 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class AnnouncementService {
     private final AnnouncementRepository announcementRepository;
+    private final AnnouncementMapper announcementMapper;
 
     public List<AnnouncementResponseDTO> getAllAnnouncements() {
         return announcementRepository.findAll().stream()
-                .map(this::convertToResponseDTO)
+                .map(announcementMapper::toResponse)
                 .toList();
     }
 
@@ -30,19 +32,7 @@ public class AnnouncementService {
         announcement.setContent(dto.getContent());
         announcement.setPriority(dto.getPriority());
         announcement.setDatePosted(LocalDateTime.now());
-
-        Announcement saved = announcementRepository.save(announcement);
-        return convertToResponseDTO(saved);
-    }
-
-    private AnnouncementResponseDTO convertToResponseDTO(Announcement entity) {
-        AnnouncementResponseDTO dto = new AnnouncementResponseDTO();
-        dto.setId(entity.getId());
-        dto.setTitle(entity.getTitle());
-        dto.setContent(entity.getContent());
-        dto.setPriority(entity.getPriority());
-        dto.setDatePosted(entity.getDatePosted());
-        return dto;
+        return announcementMapper.toResponse(announcementRepository.save(announcement));
     }
 
     @Transactional
