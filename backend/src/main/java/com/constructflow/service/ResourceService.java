@@ -5,13 +5,10 @@ import com.constructflow.dto.ResourceResponseDTO;
 import com.constructflow.exception.ResourceNotFoundException;
 import com.constructflow.model.Resource;
 import com.constructflow.repository.ResourceRepository;
-import com.constructflow.repository.TaskAllocationRepository;
 import com.constructflow.service.factory.ResourceFactory;
 import com.constructflow.service.mapping.ResourceMapper;
-import com.constructflow.service.observer.Activity;
-import com.constructflow.service.observer.ActivityHub;
-import com.constructflow.service.template.allocation.AllocationRequest;
-import com.constructflow.service.template.allocation.AllocationValidatorRegistry;
+import com.constructflow.service.mediator.allocation.AllocationCommand;
+import com.constructflow.service.mediator.allocation.AllocationMediator;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,35 +25,13 @@ public class ResourceService {
     private static final Logger log = LoggerFactory.getLogger(ResourceService.class);
 
     private final ResourceRepository resourceRepository;
-    private final TaskAllocationRepository taskAllocationRepository;
     private final ResourceMapper resourceMapper;
     private final ResourceFactory resourceFactory;
-    private final AllocationValidatorRegistry allocationValidatorRegistry;
+    private final AllocationMediator allocationMediator;
 
     @Transactional
     public void allocateResource(UUID taskId, UUID resourceId, Double quantity) {
-        AllocationRequest request = new AllocationRequest(taskId, resourceId, quantity);
-        Resource resource = allocationValidatorRegistry
-                .forCategory(resolveCategoryFor(resourceId))
-                .validate(request);
-
-        resource.setQuantity(resource.getQuantity() - quantity);
-        resourceRepository.save(resource);
-
-        com.constructflow.model.TaskAllocation allocation = new com.constructflow.model.TaskAllocation();
-        allocation.setTaskId(taskId);
-        allocation.setResourceId(resourceId);
-        allocation.setQuantityAllocated(quantity);
-        allocation.setAllocatedAt(java.time.LocalDateTime.now());
-        taskAllocationRepository.save(allocation);
-
-        ActivityHub.INSTANCE.publish(new Activity.ResourceAllocated(taskId, resourceId, quantity));
-    }
-
-    private String resolveCategoryFor(UUID resourceId) {
-        return resourceRepository.findById(resourceId)
-                .map(Resource::getCategory)
-                .orElse(null);
+        allocationMediator.allocate(new AllocationCommand(taskId, resourceId, quantity));
     }
 
     @Transactional
