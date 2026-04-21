@@ -6,6 +6,7 @@ import com.constructflow.exception.ResourceNotFoundException;
 import com.constructflow.model.Project;
 import com.constructflow.repository.ProjectRepository;
 import com.constructflow.repository.TaskRepository;
+import com.constructflow.service.factory.ProjectFactory;
 import com.constructflow.service.mapping.ProjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -23,6 +24,7 @@ public class ProjectService {
     private final ProjectRepository projectRepository;
     private final TaskRepository taskRepository;
     private final ProjectMapper projectMapper;
+    private final ProjectFactory projectFactory;
 
     public Page<ProjectResponseDTO> getAllProjects(Pageable pageable) {
         return projectRepository.findAll(pageable).map(projectMapper::toResponse);
@@ -36,34 +38,14 @@ public class ProjectService {
 
     @Transactional
     public ProjectResponseDTO createProject(ProjectRequestDTO dto) {
-        Project project = new Project();
-        project.setName(dto.getName());
-        project.setClient(dto.getClient());
-        project.setLocation(dto.getLocation());
-        project.setBudget(dto.getBudget());
-        project.setActualCost(BigDecimal.ZERO);
-        project.setStartDate(dto.getStartDate());
-        project.setEndDate(dto.getEndDate());
-        project.setProgress(0.0);
-        project.setStatus(dto.getStatus() != null ? dto.getStatus() : "Active");
-        project.setObjectives(dto.getObjectives());
-        project.setMilestones(dto.getMilestones());
-        return projectMapper.toResponse(projectRepository.save(project));
+        return projectMapper.toResponse(projectRepository.save(projectFactory.create(dto)));
     }
 
     @Transactional
     public ProjectResponseDTO updateProject(UUID id, ProjectRequestDTO dto) {
         Project project = projectRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Project not found"));
-        if (dto.getName() != null)       project.setName(dto.getName());
-        if (dto.getClient() != null)     project.setClient(dto.getClient());
-        if (dto.getLocation() != null)   project.setLocation(dto.getLocation());
-        if (dto.getBudget() != null)     project.setBudget(dto.getBudget());
-        if (dto.getStartDate() != null)  project.setStartDate(dto.getStartDate());
-        if (dto.getEndDate() != null)    project.setEndDate(dto.getEndDate());
-        if (dto.getStatus() != null)     project.setStatus(dto.getStatus());
-        if (dto.getObjectives() != null) project.setObjectives(dto.getObjectives());
-        if (dto.getMilestones() != null) project.setMilestones(dto.getMilestones());
+        projectFactory.apply(project, dto);
         return projectMapper.toResponse(projectRepository.save(project));
     }
 

@@ -5,6 +5,7 @@ import com.constructflow.dto.TaskResponseDTO;
 import com.constructflow.exception.ResourceNotFoundException;
 import com.constructflow.model.Task;
 import com.constructflow.repository.TaskRepository;
+import com.constructflow.service.factory.TaskFactory;
 import com.constructflow.service.mapping.TaskMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -22,6 +23,7 @@ public class TaskService {
     private final TaskRepository taskRepository;
     private final ProjectService projectService;
     private final TaskMapper taskMapper;
+    private final TaskFactory taskFactory;
 
     public Page<TaskResponseDTO> getAllTasks(Pageable pageable) {
         return taskRepository.findAll(pageable).map(taskMapper::toResponse);
@@ -35,18 +37,7 @@ public class TaskService {
 
     @Transactional
     public TaskResponseDTO createTask(TaskRequestDTO dto) {
-        Task task = new Task();
-        task.setName(dto.getName());
-        task.setProjectId(dto.getProjectId());
-        task.setAssignee(dto.getAssignee());
-        task.setDueDate(dto.getDueDate());
-        task.setStatus(dto.getStatus() != null ? dto.getStatus() : "Pending");
-        task.setPriority(dto.getPriority() != null ? dto.getPriority() : "Normal");
-        task.setDescription(dto.getDescription());
-        task.setActualCost(dto.getActualCost());
-        task.setDependencies(dto.getDependencies());
-
-        Task saved = taskRepository.save(task);
+        Task saved = taskRepository.save(taskFactory.create(dto));
         projectService.updateProjectProgress(dto.getProjectId());
         return taskMapper.toResponse(saved);
     }
@@ -55,15 +46,7 @@ public class TaskService {
     public TaskResponseDTO updateTask(UUID id, TaskRequestDTO dto) {
         Task task = taskRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Task not found"));
-        if (dto.getName() != null)         task.setName(dto.getName());
-        if (dto.getAssignee() != null)     task.setAssignee(dto.getAssignee());
-        if (dto.getDueDate() != null)      task.setDueDate(dto.getDueDate());
-        if (dto.getStatus() != null)       task.setStatus(dto.getStatus());
-        if (dto.getPriority() != null)     task.setPriority(dto.getPriority());
-        if (dto.getDescription() != null)  task.setDescription(dto.getDescription());
-        if (dto.getActualCost() != null)   task.setActualCost(dto.getActualCost());
-        if (dto.getDependencies() != null) task.setDependencies(dto.getDependencies());
-
+        taskFactory.apply(task, dto);
         Task updated = taskRepository.save(task);
         projectService.updateProjectProgress(task.getProjectId());
         return taskMapper.toResponse(updated);
