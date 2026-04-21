@@ -1,0 +1,51 @@
+@startuml allocation_validator
+title Template Method — Resource-allocation validation pipeline
+
+skinparam classAttributeIconSize 0
+skinparam classFontStyle bold
+skinparam backgroundColor white
+
+abstract class AbstractAllocationValidator {
+  # resourceRepository : ResourceRepository
+  + {method} <b>validate(request : AllocationRequest) : Resource</b> <<final, template method>>
+  # checkBasicInputs(request)
+  # resolveResource(request) : Resource
+  # checkAvailability(resource, request)
+  # {abstract} checkCategoryRules(resource, request)
+  # checkProjectBudget(resource, request)  <<hook, default no-op>>
+  + {abstract} handlesCategory() : String
+}
+
+class MaterialAllocationValidator {
+  # checkCategoryRules(resource, request)
+  + handlesCategory() : "Material"
+}
+class EquipmentAllocationValidator {
+  # checkCategoryRules(resource, request)
+  + handlesCategory() : "Equipment"
+}
+class LaborAllocationValidator {
+  # checkCategoryRules(resource, request)
+  + handlesCategory() : "Labor"
+}
+
+class AllocationValidatorRegistry {
+  - byCategory : Map<String, AbstractAllocationValidator>
+  + forCategory(category : String) : AbstractAllocationValidator
+}
+
+class ResourceColleague <<client>> {
+  + reserve(command : AllocationCommand) : Resource
+}
+
+class AllocationRequest <<record>> { taskId; resourceId; quantity }
+
+AbstractAllocationValidator <|-- MaterialAllocationValidator
+AbstractAllocationValidator <|-- EquipmentAllocationValidator
+AbstractAllocationValidator <|-- LaborAllocationValidator
+
+AllocationValidatorRegistry o--> AbstractAllocationValidator
+ResourceColleague --> AllocationValidatorRegistry : dispatches by category
+AbstractAllocationValidator ..> AllocationRequest
+
+@enduml

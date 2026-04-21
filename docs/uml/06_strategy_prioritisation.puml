@@ -1,0 +1,57 @@
+@startuml strategy_prioritisation
+title Strategy — Critical-task prioritisation
+
+skinparam classAttributeIconSize 0
+skinparam classFontStyle bold
+skinparam backgroundColor white
+
+interface PrioritisationStrategy {
+  + prioritise(tasks : List<Task>) : List<Task>
+  + key() : PrioritisationKey
+}
+
+class DueDatePrioritisationStrategy {
+  + key() : DUE_DATE
+}
+class CostDescPrioritisationStrategy {
+  + key() : COST_DESC
+}
+class DependencyCountPrioritisationStrategy {
+  + key() : DEPENDENCIES
+}
+class RiskWeightedPrioritisationStrategy {
+  - riskScore(task) : double
+  + key() : RISK
+}
+
+class PrioritisationStrategyResolver {
+  - byKey : Map<PrioritisationKey, PrioritisationStrategy>
+  + resolve(key : PrioritisationKey) : PrioritisationStrategy
+}
+
+class TaskService <<client>> {
+  + getCriticalTasks(sortKey : PrioritisationKey) : List<TaskResponseDTO>
+}
+
+class TaskController <<client>> {
+  + getCriticalTasks(sortBy : PrioritisationKey) : ResponseEntity<List<TaskResponseDTO>>
+}
+
+enum PrioritisationKey {
+  DUE_DATE
+  COST_DESC
+  RISK
+  DEPENDENCIES
+}
+
+PrioritisationStrategy <|.. DueDatePrioritisationStrategy
+PrioritisationStrategy <|.. CostDescPrioritisationStrategy
+PrioritisationStrategy <|.. DependencyCountPrioritisationStrategy
+PrioritisationStrategy <|.. RiskWeightedPrioritisationStrategy
+
+PrioritisationStrategyResolver o--> PrioritisationStrategy
+TaskController --> TaskService
+TaskService --> PrioritisationStrategyResolver
+PrioritisationStrategyResolver --> PrioritisationKey
+
+@enduml

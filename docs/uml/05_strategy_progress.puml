@@ -1,0 +1,56 @@
+@startuml strategy_progress
+title Strategy — Project-progress calculation
+
+skinparam classAttributeIconSize 0
+skinparam classFontStyle bold
+skinparam backgroundColor white
+
+interface ProgressStrategy {
+  + calculate(project : Project, tasks : List<Task>) : double
+  + model() : ProgressModel
+}
+
+class TaskCountProgressStrategy {
+  + calculate(project, tasks) : double
+  + model() : TASK_COUNT
+}
+class WeightedByCostProgressStrategy {
+  + calculate(project, tasks) : double
+  + model() : WEIGHTED_BY_COST
+}
+class MilestoneBasedProgressStrategy {
+  + calculate(project, tasks) : double
+  + model() : MILESTONE_BASED
+}
+class EffortBasedProgressStrategy {
+  - workLogRepository : WorkLogRepository
+  + calculate(project, tasks) : double
+  + model() : EFFORT_BASED
+}
+
+class ProgressStrategyResolver {
+  - byModel : Map<ProgressModel, ProgressStrategy>
+  + resolve(model : ProgressModel) : ProgressStrategy
+}
+
+class ProjectService <<client>> {
+  + updateProjectProgress(projectId : UUID)
+}
+
+enum ProgressModel {
+  TASK_COUNT
+  WEIGHTED_BY_COST
+  MILESTONE_BASED
+  EFFORT_BASED
+}
+
+ProgressStrategy <|.. TaskCountProgressStrategy
+ProgressStrategy <|.. WeightedByCostProgressStrategy
+ProgressStrategy <|.. MilestoneBasedProgressStrategy
+ProgressStrategy <|.. EffortBasedProgressStrategy
+
+ProgressStrategyResolver o--> ProgressStrategy
+ProjectService --> ProgressStrategyResolver : picks strategy per project
+ProgressStrategyResolver --> ProgressModel
+
+@enduml

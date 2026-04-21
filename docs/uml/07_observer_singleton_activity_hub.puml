@@ -1,0 +1,72 @@
+@startuml observer_singleton_activity_hub
+title Observer + Singleton — Global activity stream (ActivityHub)
+
+skinparam classAttributeIconSize 0
+skinparam classFontStyle bold
+skinparam backgroundColor white
+
+enum "ActivityHub\n<<enum singleton>>" as ActivityHub {
+  INSTANCE
+  - observers : List<ActivityObserver>
+  + subscribe(observer : ActivityObserver)
+  + unsubscribe(observer : ActivityObserver)
+  + publish(activity : Activity)
+  + subscriberCount() : int
+  + clear()
+}
+
+interface ActivityObserver {
+  + onActivity(activity : Activity)
+}
+
+class AuditLogObserver {
+  + onActivity(activity)
+  + register() <<@PostConstruct>>
+}
+class DashboardCounterObserver {
+  - counters : Map<String, AtomicLong>
+  + onActivity(activity)
+  + countOf(type : String) : long
+  + snapshot() : Map<String, Long>
+}
+class OverdueAlertObserver {
+  + onActivity(activity)
+}
+
+interface Activity <<sealed>> {
+  + at() : LocalDateTime
+}
+class "TaskCreated" as TaskCreated <<record>>
+class "TaskCompleted" as TaskCompleted <<record>>
+class "TaskOverdue" as TaskOverdue <<record>>
+class "ResourceAllocated" as ResourceAllocated <<record>>
+class "CommentPosted" as CommentPosted <<record>>
+
+class TaskService <<publisher>>
+class ResourceService <<publisher>>
+class AnnouncementCommentService <<publisher>>
+
+ActivityObserver <|.. AuditLogObserver
+ActivityObserver <|.. DashboardCounterObserver
+ActivityObserver <|.. OverdueAlertObserver
+
+Activity <|.. TaskCreated
+Activity <|.. TaskCompleted
+Activity <|.. TaskOverdue
+Activity <|.. ResourceAllocated
+Activity <|.. CommentPosted
+
+ActivityHub o--> ActivityObserver : notifies every subscriber
+
+TaskService ..> ActivityHub : publish
+ResourceService ..> ActivityHub : publish
+AnnouncementCommentService ..> ActivityHub : publish
+
+note right of ActivityHub
+  Enum-based Singleton (Effective Java, Item 3):
+  - single instance guaranteed by the JVM
+  - thread-safe without synchronization
+  - immune to reflection and serialisation attacks
+end note
+
+@enduml

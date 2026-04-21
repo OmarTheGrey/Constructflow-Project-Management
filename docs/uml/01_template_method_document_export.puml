@@ -1,0 +1,62 @@
+@startuml document_export
+title Template Method — Document Export pipeline
+
+skinparam classAttributeIconSize 0
+skinparam classFontStyle bold
+skinparam backgroundColor white
+
+abstract class AbstractDocumentExporter {
+  # documentRepository : DocumentRepository
+  # documentStorage : DocumentStorage
+  + {method} <b>export(request : ExportRequest) : ExportResult</b> <<final, template method>>
+  # validateAccess(request : ExportRequest)
+  # resolveDocument(request : ExportRequest) : Document
+  # loadContent(document : Document) : byte[]
+  # {abstract} transform(document : Document, raw : byte[]) : byte[]
+  # {abstract} contentType() : String
+  # {abstract} fileExtension() : String
+  # buildFilename(document : Document) : String
+  # logExport(request : ExportRequest, filename : String)
+}
+
+class PdfDocumentExporter {
+  # transform(document, raw) : byte[]
+  # contentType() : "application/pdf"
+  # fileExtension() : "pdf"
+}
+class CsvDocumentExporter {
+  # transform(document, raw) : byte[]
+  # contentType() : "text/csv"
+  # fileExtension() : "csv"
+}
+class ZipArchiveExporter {
+  # transform(document, raw) : byte[]
+  # contentType() : "application/zip"
+  # fileExtension() : "zip"
+}
+
+class DocumentExporterResolver {
+  - exporters : Map<ExportFormat, AbstractDocumentExporter>
+  + forFormat(format : ExportFormat) : AbstractDocumentExporter
+}
+
+class DocumentController <<client>> {
+  + exportDocument(id, format, requestedBy) : ResponseEntity<byte[]>
+}
+
+enum ExportFormat { PDF; CSV; ZIP }
+class ExportRequest <<record>> { documentId; format; requestedBy }
+class ExportResult  <<record>> { filename; contentType; bytes }
+
+AbstractDocumentExporter <|-- PdfDocumentExporter
+AbstractDocumentExporter <|-- CsvDocumentExporter
+AbstractDocumentExporter <|-- ZipArchiveExporter
+
+DocumentExporterResolver o--> AbstractDocumentExporter
+DocumentController --> DocumentExporterResolver : resolves
+DocumentController ..> ExportRequest
+AbstractDocumentExporter ..> ExportRequest
+AbstractDocumentExporter ..> ExportResult
+DocumentExporterResolver --> ExportFormat
+
+@enduml

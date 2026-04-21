@@ -1,0 +1,54 @@
+@startuml mediator_allocation
+title Mediator — Resource-allocation workflow
+
+skinparam classAttributeIconSize 0
+skinparam classFontStyle bold
+skinparam backgroundColor white
+
+interface AllocationMediator {
+  + allocate(command : AllocationCommand)
+}
+
+class DefaultAllocationMediator {
+  + allocate(command : AllocationCommand)
+}
+
+class ResourceColleague {
+  + reserve(command) : Resource
+  + categoryOf(resourceId) : String
+}
+class TaskAllocationColleague {
+  + record(command) : TaskAllocation
+}
+class NotificationColleague {
+  + broadcast(command)
+}
+class AuditColleague {
+  + recordAllocation(command, resourceName)
+}
+
+class ResourceService <<client>> {
+  + allocateResource(taskId, resourceId, qty)
+}
+
+class AllocationCommand <<record>> { taskId; resourceId; quantity }
+
+AllocationMediator <|.. DefaultAllocationMediator
+
+DefaultAllocationMediator --> ResourceColleague
+DefaultAllocationMediator --> TaskAllocationColleague
+DefaultAllocationMediator --> NotificationColleague
+DefaultAllocationMediator --> AuditColleague
+
+ResourceService --> AllocationMediator : single mediator call
+DefaultAllocationMediator ..> AllocationCommand
+
+note right of DefaultAllocationMediator
+  Fixed sequence (business rule):
+  1) reserve stock
+  2) record allocation row
+  3) broadcast event
+  4) write audit line
+end note
+
+@enduml

@@ -1,0 +1,64 @@
+@startuml iterator_paged_repository
+title Iterator — Lazy traversal of projects and tasks
+
+skinparam classAttributeIconSize 0
+skinparam classFontStyle bold
+skinparam backgroundColor white
+
+interface "Iterator<T>" as IteratorT {
+  + hasNext() : boolean
+  + next() : T
+}
+interface "Iterable<T>" as IterableT {
+  + iterator() : Iterator<T>
+}
+
+class "PagedRepositoryIterator<T>" as PagedRepoIter {
+  - pageFetcher : Function<Pageable, Page<T>>
+  - pageSize : int
+  - currentPage : Page<T>
+  - inner : Iterator<T>
+  - nextPageIndex : int
+  + hasNext() : boolean
+  + next() : T
+  - advance()
+}
+
+class ProjectScanner {
+  - projectRepository : ProjectRepository
+  + iterator() : Iterator<Project>
+}
+
+class ProjectTaskTreeIterator {
+  - projects : Iterator<Project>
+  - taskRepository : TaskRepository
+  - currentTasks : Iterator<Task>
+  + hasNext() : boolean
+  + next() : Task
+}
+
+class GlobalReportService <<client>>
+class AnalyticsService <<client>>
+class ReportService <<client>>
+
+IteratorT <|.. PagedRepoIter
+IteratorT <|.. ProjectTaskTreeIterator
+IterableT <|.. ProjectScanner
+
+ProjectScanner ..> PagedRepoIter : constructs each iterator()
+ProjectTaskTreeIterator --> ProjectScanner : composes
+ProjectTaskTreeIterator ..> PagedRepoIter
+
+GlobalReportService --> ProjectScanner
+GlobalReportService --> ProjectTaskTreeIterator
+ReportService --> ProjectScanner
+ReportService --> ProjectTaskTreeIterator
+AnalyticsService --> PagedRepoIter
+
+note right of PagedRepoIter
+  Constant-memory traversal:
+  one DB page at a time, no
+  findAll() on the whole table.
+end note
+
+@enduml
