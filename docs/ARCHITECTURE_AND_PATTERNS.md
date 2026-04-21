@@ -1,6 +1,6 @@
 # ConstructFlow — Architecture, SOLID Compliance & Design-Pattern Implementation
 
-> A complete map of the ConstructFlow codebase documenting the **Adapter**, **Factory Method**, **Abstract Factory**, **Iterator**, and **Composite** patterns that were introduced into the Java backend, and how each one closed a specific SOLID violation.
+> A complete map of the ConstructFlow codebase documenting the ten design patterns that were introduced into the Java backend across two phases — the creational/structural pass (**Adapter**, **Factory Method**, **Abstract Factory**, **Iterator**, **Composite**) and the behavioural pass (**Template Method** ×2, **Mediator** ×2, **Strategy** ×2, **Observer + Singleton**) — and how each one closed a specific SOLID violation or opened a specific extension point.
 
 ---
 
@@ -18,13 +18,23 @@
 10. [Frontend Overview](#10-frontend-overview)
 11. [SOLID Audit — Violations Addressed](#11-solid-audit--violations-addressed)
 12. [Design-Pattern Implementation](#12-design-pattern-implementation)
-    - [12.1 Adapter](#121-adapter--document-storage-decoupled)
-    - [12.2 Factory Method](#122-factory-method--entity-construction)
-    - [12.3 Abstract Factory](#123-abstract-factory--report-families)
-    - [12.4 Iterator](#124-iterator--lazy-repository-traversal)
-    - [12.5 Composite](#125-composite--task-hierarchy--progress-aggregation)
+    - [Phase 1 — Creational & Structural](#phase-1--creational--structural)
+      - [12.1 Adapter](#121-adapter--document-storage-decoupled)
+      - [12.2 Factory Method](#122-factory-method--entity-construction)
+      - [12.3 Abstract Factory](#123-abstract-factory--report-families)
+      - [12.4 Iterator](#124-iterator--lazy-repository-traversal)
+      - [12.5 Composite](#125-composite--task-hierarchy--progress-aggregation)
+    - [Phase 2 — Behavioural](#phase-2--behavioural)
+      - [12.6 Template Method — Document Export](#126-template-method--document-export)
+      - [12.7 Template Method — Allocation Validation](#127-template-method--allocation-validation)
+      - [12.8 Mediator — Resource-Allocation Workflow](#128-mediator--resource-allocation-workflow)
+      - [12.9 Mediator — Announcement Discussion Room](#129-mediator--announcement-discussion-room)
+      - [12.10 Strategy — Project-Progress Calculation](#1210-strategy--project-progress-calculation)
+      - [12.11 Strategy — Critical-Task Prioritisation](#1211-strategy--critical-task-prioritisation)
+      - [12.12 Observer + Singleton — Global Activity Hub](#1212-observer--singleton--global-activity-hub)
 13. [Final Package Structure](#13-final-package-structure)
 14. [Migration Log](#14-migration-log)
+15. [Testing](#15-testing)
 
 ---
 
@@ -34,24 +44,30 @@
 Constructflow-Project-Management/
 ├── backend/                         # Spring Boot 3.2.1 Java backend
 │   ├── pom.xml
-│   └── src/main/java/com/constructflow/
-│       ├── BackendApplication.java
-│       ├── config/                  # WebConfig, AppProperties, StorageProperties
-│       ├── controller/              # 9 REST controllers
-│       ├── dto/                     # 17 request/response DTOs
-│       ├── exception/               # GlobalExceptionHandler + 3 domain exceptions
-│       ├── model/                   # 11 JPA entities + BaseEntity
-│       │   └── work/                # Composite pattern nodes
-│       ├── repository/              # 11 Spring Data repositories
-│       └── service/                 # 13+ service classes
-│           ├── events/              # TaskMutatedEvent, ProgressRecalculator
-│           ├── factory/             # EntityFactory implementations
-│           │   └── report/          # Abstract Factory report family
-│           ├── iteration/           # Iterator implementations
-│           ├── mapping/             # XxxMapper components
-│           └── storage/             # Adapter: DocumentStorage port + adapters
+│   └── src/
+│       ├── main/java/com/constructflow/
+│       │   ├── BackendApplication.java
+│       │   ├── config/              # WebConfig, AppProperties, StorageProperties
+│       │   ├── controller/          # 9 REST controllers
+│       │   ├── dto/                 # 17 request/response DTOs
+│       │   ├── exception/           # GlobalExceptionHandler + 3 domain exceptions
+│       │   ├── model/               # 11 JPA entities + BaseEntity
+│       │   │   └── work/            # Composite pattern nodes
+│       │   ├── repository/          # 11 Spring Data repositories
+│       │   └── service/             # Business logic + sub-packages
+│       │       ├── events/          # TaskMutatedEvent, ProgressRecalculator
+│       │       ├── factory/         # Factory Method + Abstract Factory (report/)
+│       │       ├── iteration/       # Iterator implementations
+│       │       ├── mapping/         # XxxMapper components
+│       │       ├── mediator/        # Mediator: allocation/ + discussion/
+│       │       ├── observer/        # Observer + Singleton: ActivityHub
+│       │       ├── storage/         # Adapter: DocumentStorage port + adapters
+│       │       ├── strategy/        # Strategy: progress/ + prioritisation/
+│       │       └── template/        # Template Method: export/ + allocation/
+│       └── test/java/.../observer/  # ActivityHubTest (singleton + observer invariants)
 ├── construct-flow-nextjs-frontend/  # Next.js 16 / React 19 / TypeScript
-├── docs/                            # ERDs, setup docs, this file
+├── docs/                            # ERDs, setup docs, UML, this file
+│   └── uml/                         # 8 PlantUML sources + rendered PNGs
 ├── README.md
 └── LICENSE
 ```
@@ -69,13 +85,15 @@ Constructflow-Project-Management/
 | Build | Maven |
 | Validation | Jakarta Bean Validation |
 | Boilerplate | Lombok (`@RequiredArgsConstructor`, `@Data`, …) |
+| Testing | JUnit 5 (via `spring-boot-starter-test`) |
+| UML | PlantUML (sources + rendered PNGs in `docs/uml/`) |
 | Frontend | Next.js 16, React 19, TypeScript 5, TailwindCSS 4, Radix UI, Axios, React Hook Form, Zod, Recharts |
 
 ---
 
 ## 3. Java Backend — Structure
 
-Entry point: [backend/src/main/java/com/constructflow/BackendApplication.java](backend/src/main/java/com/constructflow/BackendApplication.java)
+Entry point: [backend/src/main/java/com/constructflow/BackendApplication.java](../backend/src/main/java/com/constructflow/BackendApplication.java)
 
 ```
 com.constructflow
@@ -87,16 +105,29 @@ com.constructflow
 ├── dto.*                       # API contracts
 ├── exception.*                 # GlobalExceptionHandler + domain exceptions
 ├── model.*                     # JPA entities
-├── model.work.*                # WorkItem, LeafTask, CompositeTask, WorkItemVisitor
+├── model.work.*                # WorkItem, LeafTask, CompositeTask, WorkItemVisitor  (Composite)
 ├── repository.*                # JpaRepository interfaces
-└── service.*                   # Business logic + sub-packages
+└── service
+    ├── events.*                # TaskMutatedEvent, ProgressRecalculator
+    ├── factory.*               # EntityFactory + TaskFactory, ProjectFactory, ResourceFactory
+    ├── factory.report.*        # ReportArtifactFactory family (Abstract Factory)
+    ├── iteration.*             # PagedRepositoryIterator, ProjectScanner, ProjectTaskTreeIterator
+    ├── mapping.*               # 9 XxxMapper components
+    ├── mediator.allocation.*   # AllocationMediator + 4 colleagues
+    ├── mediator.discussion.*   # AnnouncementRoom + 3 participants
+    ├── observer.*              # ActivityHub (enum singleton) + 3 observers + Activity variants
+    ├── storage.*               # DocumentStorage (port) + LocalFileSystemStorageAdapter
+    ├── strategy.progress.*     # ProgressStrategy + 4 implementations
+    ├── strategy.prioritisation.*  # PrioritisationStrategy + 4 implementations
+    ├── template.export.*       # AbstractDocumentExporter + PDF/CSV/ZIP
+    └── template.allocation.*   # AbstractAllocationValidator + Material/Equipment/Labor
 ```
 
 ---
 
 ## 4. Domain Model (Entities)
 
-All entities extend [BaseEntity](backend/src/main/java/com/constructflow/model/BaseEntity.java) which provides:
+All entities extend [BaseEntity](../backend/src/main/java/com/constructflow/model/BaseEntity.java) which provides:
 - `UUID id` (generated)
 - `LocalDateTime createdAt` (`@CreatedDate`)
 - `LocalDateTime lastModifiedAt` (`@LastModifiedDate`)
@@ -104,7 +135,7 @@ All entities extend [BaseEntity](backend/src/main/java/com/constructflow/model/B
 
 | Entity | Key fields | Relationships |
 |---|---|---|
-| **Project** | name, client, location, budget, actualCost, startDate, endDate, progress, status, objectives, milestones | 1..N Tasks, Resources, Documents, Stakeholders, DailyReports |
+| **Project** | name, client, location, budget, actualCost, startDate, endDate, progress, status, objectives, milestones, **progressModel** (new — enum `ProgressModel`) | 1..N Tasks, Resources, Documents, Stakeholders, DailyReports |
 | **Task** | name, projectId, **parentTaskId** (new), assignee, dueDate, status, priority, description, actualCost, dependencies | belongs to Project; self-referential parent/child; 1..N DailyLogs, WorkLogs, TaskAllocations |
 | **Resource** | name, category (Material/Equipment/Labor), quantity, unit, allocationPercentage, cost, projectId | 1..N TaskAllocations |
 | **TaskAllocation** | taskId, resourceId, quantityAllocated, allocatedAt, notes | join entity |
@@ -120,27 +151,30 @@ All entities extend [BaseEntity](backend/src/main/java/com/constructflow/model/B
 
 ## 5. Repositories
 
-All under [backend/src/main/java/com/constructflow/repository/](backend/src/main/java/com/constructflow/repository/). Each extends `JpaRepository<Entity, UUID>`. Highlights:
+All under [backend/src/main/java/com/constructflow/repository/](../backend/src/main/java/com/constructflow/repository/). Each extends `JpaRepository<Entity, UUID>`. Highlights:
 
 - `ProjectRepository` — `findByStatus`, aggregate queries (`getTotalBudget`, `getAverageActualCost`), sub-query `findHighValueProjects`.
 - `TaskRepository` — `findByProjectId`, `findByPriority`, `findCriticalTasks`, `findExpensiveTasks` (sub-query).
 - `ResourceRepository` — `findResourcesInActiveProjects` (multi-join).
 - `DailyLogRepository` — `findLogsByProjectLocation`, `findTasksUsingResourceCategory` (4-table joins).
+- `WorkLogRepository` — `findByTaskId` (used by the effort-based progress strategy).
 
 ---
 
 ## 6. Services
 
-All `@Service` + `@RequiredArgsConstructor`. Each service was refactored to inject a dedicated mapper and factory rather than embed mapping and construction logic inline.
+All `@Service` + `@RequiredArgsConstructor`. Each service was refactored to inject dedicated mappers, factories, resolvers, or mediators rather than embed mapping, construction, or orchestration logic inline.
 
-- [ProjectService.java](backend/src/main/java/com/constructflow/service/ProjectService.java) — CRUD; `updateProjectProgress(UUID)` now delegates to `TaskTreeBuilder` (Composite) instead of a flat stream.
-- [TaskService.java](backend/src/main/java/com/constructflow/service/TaskService.java) — CRUD; publishes `TaskMutatedEvent` via `ApplicationEventPublisher` instead of calling `ProjectService` directly.
-- [ResourceService.java](backend/src/main/java/com/constructflow/service/ResourceService.java) — CRUD + `allocateResource()` + `updateInventory()`; inventory changes are logged via SLF4J.
-- [DocumentService.java](backend/src/main/java/com/constructflow/service/DocumentService.java) — delegates all byte-level I/O to the injected `DocumentStorage` port; correctly deletes the physical file on `deleteDocument`.
-- [GlobalReportService.java](backend/src/main/java/com/constructflow/service/GlobalReportService.java) — uses `ProjectScanner` and `ProjectTaskTreeIterator` for O(1)-memory traversal; reads status constants from `AppProperties`.
-- [ReportService.java](backend/src/main/java/com/constructflow/service/ReportService.java) — dispatcher that resolves a `ReportArtifactFactory` by `ReportKind` and assembles the structured output map.
-- [AnalyticsService.java](backend/src/main/java/com/constructflow/service/AnalyticsService.java) — uses `PagedRepositoryIterator` for memory-safe streaming; reads status constants from `AppProperties`.
-- Other services (DailyReport, DailyLog, WorkLog, Announcement, AnnouncementComment, Stakeholder, Search) — thin CRUD wrappers using injected mappers.
+- [ProjectService.java](../backend/src/main/java/com/constructflow/service/ProjectService.java) — CRUD; `updateProjectProgress(UUID)` delegates progress to the resolved `ProgressStrategy` (Pattern 12.10) and cost to `TaskTreeBuilder` (Composite, 12.5).
+- [TaskService.java](../backend/src/main/java/com/constructflow/service/TaskService.java) — CRUD; publishes `TaskMutatedEvent` via `ApplicationEventPublisher`; `getCriticalTasks(sortKey)` delegates ordering to the resolved `PrioritisationStrategy` (12.11); publishes `ActivityHub` events on create/complete (12.12).
+- [ResourceService.java](../backend/src/main/java/com/constructflow/service/ResourceService.java) — CRUD; `allocateResource(...)` is a single line that delegates to `AllocationMediator` (12.8), which internally uses the allocation Template Method (12.7) and the ActivityHub (12.12).
+- [DocumentService.java](../backend/src/main/java/com/constructflow/service/DocumentService.java) — delegates all byte-level I/O to the injected `DocumentStorage` port (Adapter, 12.1); correctly deletes the physical file on `deleteDocument`.
+- [GlobalReportService.java](../backend/src/main/java/com/constructflow/service/GlobalReportService.java) — uses `ProjectScanner` and `ProjectTaskTreeIterator` (Iterator, 12.4) for O(1)-memory traversal; reads status constants from `AppProperties`.
+- [ReportService.java](../backend/src/main/java/com/constructflow/service/ReportService.java) — dispatcher that resolves a `ReportArtifactFactory` by `ReportKind` (Abstract Factory, 12.3).
+- [AnalyticsService.java](../backend/src/main/java/com/constructflow/service/AnalyticsService.java) — uses `PagedRepositoryIterator` for memory-safe streaming.
+- [AnnouncementCommentService.java](../backend/src/main/java/com/constructflow/service/AnnouncementCommentService.java) — now a thin forwarder onto `DiscussionRoomMediator` (12.9).
+- [TaskTreeBuilder.java](../backend/src/main/java/com/constructflow/service/TaskTreeBuilder.java) — assembles `WorkItem` composite trees from flat task rows (Composite, 12.5).
+- Other services (DailyReport, DailyLog, WorkLog, Announcement, Stakeholder, Search) — thin CRUD wrappers using injected mappers.
 
 ---
 
@@ -151,48 +185,49 @@ All per-controller `@CrossOrigin` annotations were removed; CORS is handled glob
 | Controller | Base path | Notable endpoints |
 |---|---|---|
 | ProjectController | `/api/projects` | GET list (paged), GET/POST/PUT/DELETE by id |
-| TaskController | `/api/tasks` | `/project/{id}`, `/critical` |
-| ResourceController | `/api/resources` | `POST /allocate`, `POST /{id}/inventory` |
-| AnnouncementController | `/api/announcements` | nested `/{id}/comments` |
+| TaskController | `/api/tasks` | `/project/{id}`, `/critical`, **`/critical?sortBy={DUE_DATE\|COST_DESC\|RISK\|DEPENDENCIES}`** (Strategy, 12.11) |
+| ResourceController | `/api/resources` | `POST /allocate` (Mediator, 12.8), `POST /{id}/inventory` |
+| AnnouncementController | `/api/announcements` | nested `/{id}/comments` (Mediator, 12.9) |
 | AnalyticsController | `/api/analytics` | `/dashboard`, `/advanced` |
 | DailyReportController | `/api/daily-reports` | `/project/{id}` |
-| DocumentController | `/api/documents` | upload (multipart) |
+| DocumentController | `/api/documents` | upload (multipart), **`GET /{id}/export?format={PDF\|CSV\|ZIP}`** (Template Method, 12.6) |
 | StakeholderController | `/api/stakeholders` | CRUD |
 | SearchController | `/api/search` | cross-entity search |
-| ReportController | `/api/reports` | `GET /summary`, **`GET /{kind}`** (EXECUTIVE/PROJECT/FINANCIAL) |
+| ReportController | `/api/reports` | `GET /summary`, **`GET /{kind}`** (EXECUTIVE/PROJECT/FINANCIAL; Abstract Factory, 12.3) |
 
 ---
 
 ## 8. DTOs
 
-Under [backend/src/main/java/com/constructflow/dto/](backend/src/main/java/com/constructflow/dto/). Split into `*RequestDTO` (input, validated with Jakarta annotations) and `*ResponseDTO` (output). DTO construction was moved entirely out of services into dedicated mapper components (`service/mapping/`).
+Under [backend/src/main/java/com/constructflow/dto/](../backend/src/main/java/com/constructflow/dto/). Split into `*RequestDTO` (input, validated with Jakarta annotations) and `*ResponseDTO` (output). DTO construction was moved entirely out of services into dedicated mapper components (`service/mapping/`). Two in-package records support the new features: `ExportRequest`/`ExportResult` (in `service/template/export/`) and `AllocationCommand`/`AllocationRequest` (in `service/mediator/allocation/` and `service/template/allocation/`).
 
 ---
 
 ## 9. Configuration & Cross-Cutting
 
-- **CORS**: [WebConfig.java](backend/src/main/java/com/constructflow/config/WebConfig.java) reads allowed origins from `AppProperties` (`app.cors.allowed-origins`). The wildcard `"*"` origin was removed.
+- **CORS**: [WebConfig.java](../backend/src/main/java/com/constructflow/config/WebConfig.java) reads allowed origins from `AppProperties` (`app.cors.allowed-origins`). The wildcard `"*"` origin was removed.
 - **AppProperties**: `@ConfigurationProperties(prefix = "app")` exposes CORS origins and the three canonical status strings (`active`, `in-progress`, `completed`) so they can be changed without touching Java code.
 - **StorageProperties**: `@ConfigurationProperties(prefix = "storage")` exposes `local-path` for the filesystem adapter.
-- **Exception handling**: [GlobalExceptionHandler.java](backend/src/main/java/com/constructflow/exception/GlobalExceptionHandler.java) now handles `ResourceNotFoundException` (404), `InsufficientResourceException` (422), `DomainValidationException` (400), and `MethodArgumentNotValidException` (400) in addition to the catch-all `RuntimeException` (500).
+- **Exception handling**: [GlobalExceptionHandler.java](../backend/src/main/java/com/constructflow/exception/GlobalExceptionHandler.java) now handles `ResourceNotFoundException` (404), `InsufficientResourceException` (422), `DomainValidationException` (400), and `MethodArgumentNotValidException` (400) in addition to the catch-all `RuntimeException` (500).
 - **Auditing**: `@EnableJpaAuditing` confirmed active on `BackendApplication`.
 - **Security**: No Spring Security, JWT, or auth layer — out of scope for this refactor.
+- **Events**: Two coexisting event mechanisms — Spring's `ApplicationEventPublisher` + `@TransactionalEventListener` (for intra-request, transactional concerns like progress recalculation) and the manual `ActivityHub` enum singleton (for cross-cutting broadcast concerns — audit, dashboard counters, overdue alerts).
 
 ---
 
 ## 10. Frontend Overview
 
-Next.js 16 App Router app in [construct-flow-nextjs-frontend/](construct-flow-nextjs-frontend/). Communicates with the backend via Axios (`lib/api-service.ts`, base URL `http://localhost:8080/api`). Main screens: dashboard, projects, tasks, resources, documents, daily reports, announcements, analytics. State managed via React Context (`app-context.tsx`). The frontend was not changed as part of this refactor.
+Next.js 16 App Router app in [construct-flow-nextjs-frontend/](../construct-flow-nextjs-frontend/). Communicates with the backend via Axios (`lib/api-service.ts`, base URL `http://localhost:8080/api`). Main screens: dashboard, projects, tasks, resources, documents, daily reports, announcements, analytics. State managed via React Context (`app-context.tsx`). The frontend was not changed as part of either refactor phase.
 
 ---
 
 ## 11. SOLID Audit — Violations Addressed
 
-Every finding below was resolved as part of the 10-step refactor. The commit reference for each fix is in [section 14](#14-migration-log).
+Every finding below was resolved as part of Phase 1. Commit references are in [section 14](#14-migration-log).
 
 | # | Principle | Original location | Violation | Resolution |
 |---|---|---|---|---|
-| 1 | **SRP** | `ResourceService.allocateResource` | Validated, mutated inventory, created allocation, and logged in one method. | Mapping extracted to `ResourceMapper`; logging uses SLF4J. |
+| 1 | **SRP** | `ResourceService.allocateResource` | Validated, mutated inventory, created allocation, and logged in one method. | Mapping extracted to `ResourceMapper`; validation and orchestration later moved to the Template Method (12.7) and Mediator (12.8) in Phase 2. |
 | 2 | **SRP** | `DocumentService.uploadDocument` | Mixed filesystem I/O with JPA persistence. | I/O delegated to `DocumentStorage` adapter. |
 | 3 | **SRP** | `GlobalReportService.generateExecutiveSummary` | Queried, filtered, formatted, printed debug logs, and assembled DTO in ~60 lines. | Debug prints removed; iteration extracted to iterators; report composition moved to `ReportService` + factory family. |
 | 4 | **SRP** | Every service | `mapToResponseDTO` / `convertToResponseDTO` duplicated across all 13 services. | Moved to dedicated `service/mapping/XxxMapper` components injected via constructor. |
@@ -206,9 +241,13 @@ Every finding below was resolved as part of the 10-step refactor. The commit ref
 | 12 | Exceptions | `GlobalExceptionHandler` | Caught only `RuntimeException` — every error returned 500. | Three typed domain exceptions added; handler maps each to the correct HTTP status. |
 | 13 | Config | `DocumentService`, `WebConfig`, `GlobalReportService` | Hard-coded `"uploads/"`, `"Active"`, `"In Progress"`, `"Completed"`, CORS origins. | All moved to `AppProperties` and `StorageProperties` via `@ConfigurationProperties`. |
 
+Phase 2 did not surface new SOLID violations; it added new extension points (strategies, mediators, templates, observers) that reinforce OCP and SRP in areas the previous refactor had already simplified.
+
 ---
 
 ## 12. Design-Pattern Implementation
+
+## Phase 1 — Creational & Structural
 
 ---
 
@@ -321,6 +360,8 @@ for (Project p : projectScanner) {
 
 **SOLID closed.** SRP (iteration concern extracted from business logic), OCP (swap the paging strategy by changing the `Function<Pageable, Page<T>>`), memory safety.
 
+UML: [`docs/uml/08_iterator_paged_repository.puml`](uml/08_iterator_paged_repository.puml).
+
 ---
 
 ### 12.5 Composite — Task Hierarchy & Progress Aggregation
@@ -343,13 +384,210 @@ A nullable `parentTaskId` column was added to `Task` to persist the parent/child
 
 ```java
 WorkItem root = taskTreeBuilder.buildForProject(projectId);
-project.setProgress(root.progress() * 100);
 project.setActualCost(root.actualCost());
+// progress is now owned by the Strategy in 12.10
 ```
 
 `WorkItemVisitor` was also defined to enable future report generation (e.g. "print all overdue leaf tasks in a tree") without modifying the node classes.
 
 **SOLID closed.** OCP (new node type = new class), SRP (aggregation rules inside the composite, not the service), LSP (leaf and composite are interchangeable under `WorkItem`).
+
+---
+
+## Phase 2 — Behavioural
+
+UML diagrams for every case below live under [`docs/uml/`](uml/) as both PlantUML sources and rendered PNGs, with a per-diagram explainer in [`docs/uml/README.md`](uml/README.md). Full technical write-ups of each pattern (including participants tables, sequence notes, and per-case assumptions) live in [`BEHAVIOURAL_PATTERNS_REPORT.md`](BEHAVIOURAL_PATTERNS_REPORT.md).
+
+---
+
+### 12.6 Template Method — Document Export
+
+**Problem.** Users need to export uploaded documents in multiple formats (PDF, CSV, ZIP). The pipeline — validate requester → resolve document → load bytes → transform → log — is fixed; only the transform, content-type, and file-extension steps vary per format.
+
+**Design.** `AbstractDocumentExporter.export(ExportRequest)` is the `final` template method. Subclasses override three abstract primitives (`transform`, `contentType`, `fileExtension`) and may override the `validateAccess`, `buildFilename`, and `logExport` hooks.
+
+```java
+public final ExportResult export(ExportRequest request) throws IOException {
+    validateAccess(request);
+    Document document = resolveDocument(request);
+    byte[] rawContent = loadContent(document);
+    byte[] transformed = transform(document, rawContent);
+    String filename = buildFilename(document);
+    logExport(request, filename);
+    return new ExportResult(filename, contentType(), transformed);
+}
+```
+
+Three concrete subclasses ship as `@Component`s: `PdfDocumentExporter`, `CsvDocumentExporter`, `ZipArchiveExporter`. `DocumentExporterResolver` maps the `ExportFormat` enum to the correct exporter at startup. The controller exposes `GET /api/documents/{id}/export?format=PDF|CSV|ZIP`.
+
+**SOLID wins.** OCP (new format = new `@Component` + one enum entry), SRP (each exporter owns only its encoding), LSP (all exporters interchangeable under `AbstractDocumentExporter`).
+
+UML: [`docs/uml/01_template_method_document_export.puml`](uml/01_template_method_document_export.puml).
+
+---
+
+### 12.7 Template Method — Allocation Validation
+
+**Problem.** `ResourceService.allocateResource` used to run a single availability check. In reality, Material, Equipment, and Labor allocations have different rules: materials must not drop below a reorder buffer; equipment must be allocated in whole units and cannot exceed 100% allocation; labor must not exceed a per-booking hour cap. The skeleton — basic input checks → resolve resource → availability → category rule → optional budget — is identical across categories.
+
+**Design.** `AbstractAllocationValidator.validate(AllocationRequest)` is the `final` template method that enforces the order. Subclasses implement the `checkCategoryRules` abstract primitive. `AllocationValidatorRegistry` dispatches to the right subclass by `resource.getCategory()`, with `MaterialAllocationValidator` acting as the strictest fallback.
+
+```java
+public final Resource validate(AllocationRequest request) {
+    checkBasicInputs(request);
+    Resource resource = resolveResource(request);
+    checkAvailability(resource, request);
+    checkCategoryRules(resource, request);   // abstract
+    checkProjectBudget(resource, request);   // hook (default no-op)
+    return resource;
+}
+```
+
+The validator is consumed inside `ResourceColleague.reserve(command)` — part of the Mediator workflow in 12.8.
+
+**SOLID wins.** OCP (new category = new subclass), SRP (each validator owns one rule), DRY.
+
+UML: [`docs/uml/02_template_method_allocation_validator.puml`](uml/02_template_method_allocation_validator.puml).
+
+---
+
+### 12.8 Mediator — Resource-Allocation Workflow
+
+**Problem.** Allocating a resource touches four concerns (stock, allocation row, broadcast, audit). Directly coupling `ResourceService` to all four created a mesh where the business rule — "reserve → record → broadcast → audit, in that order" — was hidden inside one long method.
+
+**Design.** `AllocationMediator` is the interface; `DefaultAllocationMediator` is the concrete mediator that sequences four colleagues:
+
+| Colleague | Responsibility |
+|---|---|
+| `ResourceColleague` | Runs the allocation Template Method (12.7) and deducts the quantity |
+| `TaskAllocationColleague` | Persists the `TaskAllocation` row |
+| `NotificationColleague` | Publishes `Activity.ResourceAllocated` to the `ActivityHub` (12.12) |
+| `AuditColleague` | Writes the audit log line via SLF4J |
+
+`ResourceService.allocateResource(taskId, resourceId, qty)` is now one line:
+
+```java
+allocationMediator.allocate(new AllocationCommand(taskId, resourceId, qty));
+```
+
+The mediator is `@Transactional` — a failure in any colleague rolls back the whole operation atomically.
+
+**SOLID wins.** SRP (each colleague has one job; the mediator owns sequencing), DIP (`ResourceService` depends on an interface).
+
+UML: [`docs/uml/03_mediator_allocation.puml`](uml/03_mediator_allocation.puml).
+
+---
+
+### 12.9 Mediator — Announcement Discussion Room
+
+**Problem.** Posting a comment on an announcement should, in principle, trigger several side effects: notify the author, refresh a dashboard counter, relay the event onto the global activity stream, and (future) email mentioned users. Each side effect should be independently addable and removable.
+
+**Design.** `DiscussionRoomMediator` (interface) + `AnnouncementRoom` (concrete) implement the classic chat-room form of the pattern. Each side effect is a `Participant`; posting a comment persists the row and then fans out to every registered participant. Three default participants ship:
+
+| Participant | Behaviour |
+|---|---|
+| `AuthorParticipant` | Notifies the announcement's author |
+| `DashboardParticipant` | Increments an in-memory per-announcement comment counter |
+| `ActivityRelayParticipant` | Publishes `Activity.CommentPosted` to the `ActivityHub` (12.12) |
+
+Dynamic participants (mentions, subscribers) can `join(announcementId, participant)` and `leave(announcementId, participant)` at runtime. Dispatch is wrapped in `safeDispatch` so a misbehaving participant cannot poison the room.
+
+`AnnouncementCommentService.addComment` became a thin forwarder: `return discussionRoomMediator.post(announcementId, dto);`.
+
+**SOLID wins.** OCP (new participant = new class + one `join` call), SRP (each participant models one reaction).
+
+UML: [`docs/uml/04_mediator_discussion_room.puml`](uml/04_mediator_discussion_room.puml).
+
+---
+
+### 12.10 Strategy — Project-Progress Calculation
+
+**Problem.** `ProjectService.updateProjectProgress` used only the `completed / total` task count model. Real construction projects weight progress differently — by cost, by milestones, or by effort hours. Baking one formula into the service blocked the other three.
+
+**Design.** `ProgressStrategy` is the common interface; four interchangeable implementations ship:
+
+| Strategy | Formula |
+|---|---|
+| `TaskCountProgressStrategy` (default) | completed task count / total |
+| `WeightedByCostProgressStrategy` | share of total `actualCost` booked against completed tasks |
+| `MilestoneBasedProgressStrategy` | share of milestones hit (milestone-to-task match by name) |
+| `EffortBasedProgressStrategy` | share of logged hours on completed tasks (reads `WorkLog`) |
+
+A new `progress_model` column (enum `ProgressModel`) was added to `Project` so each project picks its own model. `ProgressStrategyResolver` dispatches by enum key. `ProjectService.updateProjectProgress` delegates the percentage to the resolved strategy and the cost rollup to the Composite tree from 12.5.
+
+**SOLID wins.** OCP (new model = new `@Component` + enum entry), SRP (each strategy owns one formula), DIP (service depends on the interface).
+
+UML: [`docs/uml/05_strategy_progress.puml`](uml/05_strategy_progress.puml).
+
+---
+
+### 12.11 Strategy — Critical-Task Prioritisation
+
+**Problem.** `GET /api/tasks/critical` returned critical-priority tasks in insertion order. Site managers need different orderings depending on context — by due date, by cost exposure, by dependency fan-out, or by a composite risk score.
+
+**Design.** `PrioritisationStrategy` is the interface; four implementations ship:
+
+| Strategy | Ordering |
+|---|---|
+| `DueDatePrioritisationStrategy` (default) | Earliest due date first; null dates sort last |
+| `CostDescPrioritisationStrategy` | Highest `actualCost` first |
+| `DependencyCountPrioritisationStrategy` | Most dependents first |
+| `RiskWeightedPrioritisationStrategy` | Composite score blending urgency, cost, and fan-out |
+
+Unlike 12.10, the strategy key (`PrioritisationKey`) is supplied at request time via the `sortBy` query parameter: `GET /api/tasks/critical?sortBy=RISK`. `PrioritisationStrategyResolver` dispatches by enum.
+
+The risk-weighted score:
+
+```
+priorityMultiplier × (urgencyScore × 10 + log10(max(cost,1)) + dependencyCount × 2)
+```
+
+where `urgencyScore` is 10 for overdue, 8 for due-today, and fades linearly over two weeks otherwise.
+
+**SOLID wins.** OCP (new ordering = new `@Component` + enum entry), SRP (each strategy is a comparator).
+
+UML: [`docs/uml/06_strategy_prioritisation.puml`](uml/06_strategy_prioritisation.puml).
+
+---
+
+### 12.12 Observer + Singleton — Global Activity Hub
+
+**Problem.** Several cross-cutting concerns — audit trail, dashboard counters, overdue alerting, future WebSocket broadcast — all need to react to the same stream of system events. Wiring each as a direct dependency of every publishing service creates a ~15-edge mesh. Spring's event bus partly solves this but is invisible outside the Spring container; a manual, textbook implementation makes the pattern explicit and testable.
+
+**Design.** `ActivityHub` is an **enum-based singleton** (Effective Java, Item 3) — JVM-guaranteed single instance, thread-safe without synchronisation, immune to reflection and serialisation attacks:
+
+```java
+public enum ActivityHub {
+    INSTANCE;
+
+    private final List<ActivityObserver> observers = new CopyOnWriteArrayList<>();
+
+    public void subscribe(ActivityObserver observer)   { observers.addIfAbsent(observer); }
+    public void unsubscribe(ActivityObserver observer) { observers.remove(observer); }
+    public void publish(Activity activity) {
+        for (ActivityObserver o : observers) {
+            try { o.onActivity(activity); }
+            catch (RuntimeException ex) { /* log + continue */ }
+        }
+    }
+}
+```
+
+`Activity` is a sealed interface with five record variants: `TaskCreated`, `TaskCompleted`, `TaskOverdue`, `ResourceAllocated`, `CommentPosted`. Three observers ship as `@Component`s that self-register in `@PostConstruct`:
+
+| Observer | Reaction |
+|---|---|
+| `AuditLogObserver` | Writes every activity to the audit logger |
+| `DashboardCounterObserver` | Maintains in-memory tallies by event type |
+| `OverdueAlertObserver` | Emits WARN-level alerts on `TaskOverdue` events |
+
+Publishers: `TaskService` (on create/complete), `NotificationColleague` (via the allocation mediator), `ActivityRelayParticipant` (via the discussion-room mediator). Dispatch is synchronous; a misbehaving observer is caught and logged so downstream observers still receive the event.
+
+**Why both patterns together.** Observer alone with multiple hubs would let observers miss events; Singleton alone gives no dispatch semantics. The combination delivers one JVM-wide publish point with pluggable reactions.
+
+**SOLID wins.** OCP (new observer = new `@Component`, no edits elsewhere), SRP (hub dispatches, observers react, publishers publish), DIP (publishers depend on the hub's public API, not on the concrete observers).
+
+UML: [`docs/uml/07_observer_singleton_activity_hub.puml`](uml/07_observer_singleton_activity_hub.puml). Test: [`backend/src/test/java/com/constructflow/service/observer/ActivityHubTest.java`](../backend/src/test/java/com/constructflow/service/observer/ActivityHubTest.java) (9 cases — see §15).
 
 ---
 
@@ -369,34 +607,34 @@ com.constructflow
 │   ├── InsufficientResourceException.java # 422
 │   └── DomainValidationException.java    # 400
 ├── model/
-│   └── work/
-│       ├── WorkItem.java                 # Composite component interface
+│   └── work/                             # Composite (Pattern 12.5)
+│       ├── WorkItem.java                 # Component interface
 │       ├── LeafTask.java                 # Leaf
 │       ├── CompositeTask.java            # Composite
 │       └── WorkItemVisitor.java          # Visitor hook
 ├── repository/
 ├── service/
-│   ├── events/
-│   │   ├── TaskMutatedEvent.java         # Spring event record
+│   ├── events/                           # Spring event bus (DIP fix in Phase 1)
+│   │   ├── TaskMutatedEvent.java
 │   │   └── ProgressRecalculator.java     # @TransactionalEventListener
-│   ├── factory/
-│   │   ├── EntityFactory.java            # Factory Method interface
+│   ├── factory/                          # Factory Method (12.2)
+│   │   ├── EntityFactory.java
 │   │   ├── TaskFactory.java
 │   │   ├── ProjectFactory.java
 │   │   ├── ResourceFactory.java
-│   │   └── report/
-│   │       ├── ReportKind.java           # EXECUTIVE / PROJECT / FINANCIAL
-│   │       ├── ReportContext.java        # Data bag passed to sections
-│   │       ├── ReportSection.java        # Section interface
-│   │       ├── ReportArtifactFactory.java # Abstract Factory interface
+│   │   └── report/                       # Abstract Factory (12.3)
+│   │       ├── ReportKind.java
+│   │       ├── ReportContext.java
+│   │       ├── ReportSection.java
+│   │       ├── ReportArtifactFactory.java
 │   │       ├── ExecutiveReportFactory.java
 │   │       ├── ProjectReportFactory.java
 │   │       └── FinancialReportFactory.java
-│   ├── iteration/
-│   │   ├── PagedRepositoryIterator.java  # Generic lazy paging iterator
-│   │   ├── ProjectScanner.java           # Iterable<Project> bean
-│   │   └── ProjectTaskTreeIterator.java  # Cross-project task iterator
-│   ├── mapping/
+│   ├── iteration/                        # Iterator (12.4)
+│   │   ├── PagedRepositoryIterator.java
+│   │   ├── ProjectScanner.java
+│   │   └── ProjectTaskTreeIterator.java
+│   ├── mapping/                          # Per-aggregate DTO mappers (Phase 1 SRP fix)
 │   │   ├── ProjectMapper.java
 │   │   ├── TaskMapper.java
 │   │   ├── ResourceMapper.java
@@ -406,17 +644,75 @@ com.constructflow
 │   │   ├── WorkLogMapper.java
 │   │   ├── StakeholderMapper.java
 │   │   └── AnnouncementMapper.java
-│   ├── storage/
-│   │   ├── DocumentStorage.java          # Adapter port (interface)
-│   │   ├── StoredFile.java               # Value record
-│   │   └── LocalFileSystemStorageAdapter.java # NIO implementation
-│   ├── ProjectService.java
-│   ├── TaskService.java
-│   ├── ResourceService.java
-│   ├── DocumentService.java
-│   ├── GlobalReportService.java
+│   ├── mediator/
+│   │   ├── allocation/                   # Mediator (12.8)
+│   │   │   ├── AllocationMediator.java
+│   │   │   ├── DefaultAllocationMediator.java
+│   │   │   ├── AllocationCommand.java
+│   │   │   ├── ResourceColleague.java
+│   │   │   ├── TaskAllocationColleague.java
+│   │   │   ├── NotificationColleague.java
+│   │   │   └── AuditColleague.java
+│   │   └── discussion/                   # Mediator (12.9)
+│   │       ├── DiscussionRoomMediator.java
+│   │       ├── AnnouncementRoom.java
+│   │       ├── Participant.java
+│   │       ├── AuthorParticipant.java
+│   │       ├── DashboardParticipant.java
+│   │       └── ActivityRelayParticipant.java
+│   ├── observer/                         # Observer + Singleton (12.12)
+│   │   ├── ActivityHub.java              # enum singleton
+│   │   ├── Activity.java                 # sealed interface + 5 record variants
+│   │   ├── ActivityObserver.java
+│   │   ├── AuditLogObserver.java
+│   │   ├── DashboardCounterObserver.java
+│   │   └── OverdueAlertObserver.java
+│   ├── storage/                          # Adapter (12.1)
+│   │   ├── DocumentStorage.java          # port
+│   │   ├── StoredFile.java
+│   │   └── LocalFileSystemStorageAdapter.java
+│   ├── strategy/
+│   │   ├── progress/                     # Strategy (12.10)
+│   │   │   ├── ProgressStrategy.java
+│   │   │   ├── ProgressModel.java
+│   │   │   ├── ProgressStrategyResolver.java
+│   │   │   ├── TaskCountProgressStrategy.java
+│   │   │   ├── WeightedByCostProgressStrategy.java
+│   │   │   ├── MilestoneBasedProgressStrategy.java
+│   │   │   └── EffortBasedProgressStrategy.java
+│   │   └── prioritisation/               # Strategy (12.11)
+│   │       ├── PrioritisationStrategy.java
+│   │       ├── PrioritisationKey.java
+│   │       ├── PrioritisationStrategyResolver.java
+│   │       ├── DueDatePrioritisationStrategy.java
+│   │       ├── CostDescPrioritisationStrategy.java
+│   │       ├── DependencyCountPrioritisationStrategy.java
+│   │       └── RiskWeightedPrioritisationStrategy.java
+│   ├── template/
+│   │   ├── export/                       # Template Method (12.6)
+│   │   │   ├── AbstractDocumentExporter.java
+│   │   │   ├── PdfDocumentExporter.java
+│   │   │   ├── CsvDocumentExporter.java
+│   │   │   ├── ZipArchiveExporter.java
+│   │   │   ├── DocumentExporterResolver.java
+│   │   │   ├── ExportFormat.java
+│   │   │   ├── ExportRequest.java
+│   │   │   └── ExportResult.java
+│   │   └── allocation/                   # Template Method (12.7)
+│   │       ├── AbstractAllocationValidator.java
+│   │       ├── MaterialAllocationValidator.java
+│   │       ├── EquipmentAllocationValidator.java
+│   │       ├── LaborAllocationValidator.java
+│   │       ├── AllocationValidatorRegistry.java
+│   │       └── AllocationRequest.java
+│   ├── ProjectService.java               # uses ProgressStrategy + Composite
+│   ├── TaskService.java                  # publishes ActivityHub + uses PrioritisationStrategy
+│   ├── ResourceService.java              # delegates to AllocationMediator
+│   ├── DocumentService.java              # depends on DocumentStorage port
+│   ├── GlobalReportService.java          # uses Iterator
 │   ├── ReportService.java                # Abstract Factory dispatcher
-│   ├── AnalyticsService.java
+│   ├── AnalyticsService.java             # uses Iterator
+│   ├── AnnouncementCommentService.java   # forwards to DiscussionRoomMediator
 │   ├── TaskTreeBuilder.java              # Composite tree assembler
 │   └── ...other services
 └── BackendApplication.java
@@ -426,7 +722,7 @@ com.constructflow
 
 ## 14. Migration Log
 
-All ten steps were completed and each was shipped as an independent commit on `main`.
+### Phase 1 — Creational & Structural (10 commits)
 
 | Step | Commit | What changed | SOLID findings closed |
 |---|---|---|---|
@@ -440,6 +736,53 @@ All ten steps were completed and each was shipped as an independent commit on `m
 | 8 | `a251517` | `WorkItem`, `LeafTask`, `CompositeTask`, `WorkItemVisitor`; `parentTaskId` added to `Task`; `TaskTreeBuilder`; `ProjectService.updateProjectProgress` delegates to composite tree | OCP/SRP on progress aggregation |
 | 9 | `caf7fa2` | Removed all per-controller `@CrossOrigin("*")`; CORS origins driven by `AppProperties`; `System.out.println` replaced with SLF4J `log.info` | #11, #13 (partial) |
 | 10 | `75d2fe5` | All hard-coded status strings (`"Active"`, `"In Progress"`, `"Completed"`) replaced with `AppProperties.status.*` injected via constructor | #13 |
+
+### Phase 2 — Behavioural (8 commits)
+
+| Step | Commit | What changed |
+|---|---|---|
+| 1 | `63c77ab` | Template Method — `AbstractDocumentExporter` + PDF/CSV/ZIP subclasses + resolver; `GET /api/documents/{id}/export?format=...` |
+| 2 | `da7a126` | Template Method — `AbstractAllocationValidator` + Material/Equipment/Labor subclasses + registry; `ResourceService` delegates to the registry |
+| 3 | `4faf155` | Strategy — `ProgressStrategy` + 4 implementations + resolver; `Project.progressModel` column; `ProjectService.updateProjectProgress` delegates |
+| 4 | `35ae7bc` | Strategy — `PrioritisationStrategy` + 4 implementations + resolver; `GET /api/tasks/critical?sortBy=...` |
+| 5 | `af7b93e` | Observer + Singleton — enum-based `ActivityHub` + `Activity` sealed variants + 3 observers + 9-case `ActivityHubTest` |
+| 6 | `64bb549` | Mediator — `AllocationMediator` + 4 colleagues; `ResourceService.allocateResource` collapses to a single mediator call |
+| 7 | `4cb5814` | Mediator — `DiscussionRoomMediator` / `AnnouncementRoom` + 3 participants; `AnnouncementCommentService` forwards to the mediator |
+| 8 | `b535c20`, `d1d7039` | PlantUML sources for all eight diagrams; syntax fixes; rendered PNGs; per-diagram explainer in `docs/uml/README.md` |
+
+---
+
+## 15. Testing
+
+### 15.1 `ActivityHubTest`
+
+[`backend/src/test/java/com/constructflow/service/observer/ActivityHubTest.java`](../backend/src/test/java/com/constructflow/service/observer/ActivityHubTest.java) runs under JUnit 5 (included via `spring-boot-starter-test`). Nine cases cover both the Singleton invariants and the Observer contract:
+
+| # | Test | What it proves |
+|---|---|---|
+| 1 | `sameInstanceAcrossLookups` | `ActivityHub.INSTANCE` resolves to the same object on every call |
+| 2 | `enumValuesContainsExactlyOneInstance` | `ActivityHub.values().length == 1` |
+| 3 | `reflectionCannotInstantiateASecondHub` | JDK blocks `Constructor.newInstance` on enum types |
+| 4 | `serialisationRoundTripReturnsSameInstance` | Enum singletons survive serialise/deserialise as themselves |
+| 5 | `subscribedObserversReceivePublishedActivities` | Basic dispatch works |
+| 6 | `allRegisteredObserversReceiveTheSameEvent` | Fan-out is to the same object reference |
+| 7 | `unsubscribedObserverStopsReceivingEvents` | `unsubscribe` actually unsubscribes |
+| 8 | `misbehavingObserverDoesNotPreventOthersFromReceiving` | Exception isolation between observers |
+
+Run:
+
+```bash
+cd backend
+mvn test -Dtest=ActivityHubTest
+```
+
+### 15.2 Future testing
+
+Not in scope for this phase but worth tracking:
+
+- Integration tests on the new REST endpoints (`/documents/{id}/export`, `/tasks/critical?sortBy=...`).
+- Unit tests per `ProgressStrategy` and `PrioritisationStrategy` implementation against synthetic fixtures.
+- Integration tests on both mediators exercising transactional rollback on colleague failure.
 
 ---
 
