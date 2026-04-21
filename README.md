@@ -18,6 +18,7 @@
 - [Overview](#overview)
 - [Key Features](#key-features)
 - [Tech Stack](#tech-stack)
+- [Backend Architecture Refactor](#backend-architecture-refactor)
 - [Prerequisites](#prerequisites)
 - [Installation](#installation)
 - [Configuration](#configuration)
@@ -103,6 +104,81 @@
 - Critical, High, and Normal priority tags
 - Announcement board for team communication
 - Discussion threads on each announcement
+
+---
+
+---
+
+## 🏛 Backend Architecture Refactor
+
+The Java backend underwent a full SOLID-compliance refactor introducing five classic design patterns. All changes shipped across 10 atomic commits. The full technical write-up lives in [`docs/ARCHITECTURE_AND_PATTERNS.md`](docs/ARCHITECTURE_AND_PATTERNS.md).
+
+### What changed at a glance
+
+| Pattern | Where | Effect |
+|---|---|---|
+| **Adapter** | `DocumentService` → `DocumentStorage` port | Storage backend swappable (NIO → S3/Azure) without touching the service |
+| **Factory Method** | `EntityFactory<E,D>` → `TaskFactory`, `ProjectFactory`, `ResourceFactory` | Entity construction rules centralised; services reduced to one-liners |
+| **Abstract Factory** | `ReportArtifactFactory` family | New report types (Executive/Project/Financial) added as new classes — no existing code edited |
+| **Iterator** | `PagedRepositoryIterator`, `ProjectScanner`, `ProjectTaskTreeIterator` | `findAll()` removed; repositories paged lazily at O(1) memory |
+| **Composite** | `WorkItem` / `LeafTask` / `CompositeTask` | Task subtree progress and cost aggregate recursively; `ProjectService` reduced to two lines |
+
+### SOLID violations resolved
+
+| Principle | Finding | Fix |
+|---|---|---|
+| **SRP** | `mapToResponseDTO` duplicated across all 13 services | Extracted to `service/mapping/XxxMapper` components |
+| **SRP** | `DocumentService` mixed NIO I/O with JPA persistence | I/O moved to `LocalFileSystemStorageAdapter` |
+| **SRP** | `GlobalReportService` queried, filtered, formatted, and debug-printed all in one method | Decomposed into iterators + `ReportService` + factory sections |
+| **OCP** | Adding a report type required editing `GlobalReportService` | `ReportArtifactFactory` — new kind = new `@Component` |
+| **DIP** | `TaskService` imported concrete `ProjectService` | Publishes `TaskMutatedEvent`; `ProgressRecalculator` listens with `@TransactionalEventListener` |
+| **DIP** | `DocumentService` coupled to `java.nio.file` | Depends on `DocumentStorage` interface |
+| **DIP** | `ResourceService.updateInventory` used `System.out.println` | Replaced with SLF4J `log.info` |
+| Exceptions | `GlobalExceptionHandler` mapped everything to 500 | Three typed exceptions added: `ResourceNotFoundException` (404), `InsufficientResourceException` (422), `DomainValidationException` (400) |
+| Config | Status strings and CORS origins hard-coded in Java | Externalised to `AppProperties` via `@ConfigurationProperties` |
+| Security | `@CrossOrigin(origins = "*")` on every controller | Removed; global CORS config reads allowed origins from `application.properties` |
+
+### New packages added
+
+```
+service/
+├── events/      TaskMutatedEvent, ProgressRecalculator
+├── factory/     EntityFactory, TaskFactory, ProjectFactory, ResourceFactory
+│   └── report/  ReportArtifactFactory, ExecutiveReportFactory,
+│                ProjectReportFactory, FinancialReportFactory,
+│                ReportKind, ReportContext, ReportSection
+├── iteration/   PagedRepositoryIterator, ProjectScanner, ProjectTaskTreeIterator
+├── mapping/     ProjectMapper, TaskMapper, ResourceMapper, DocumentMapper,
+│                DailyReportMapper, DailyLogMapper, WorkLogMapper,
+│                StakeholderMapper, AnnouncementMapper
+└── storage/     DocumentStorage (port), StoredFile, LocalFileSystemStorageAdapter
+
+model/work/      WorkItem, LeafTask, CompositeTask, WorkItemVisitor
+
+config/          AppProperties, StorageProperties (both @ConfigurationProperties)
+
+exception/       ResourceNotFoundException, InsufficientResourceException,
+                 DomainValidationException
+```
+
+### New API endpoints
+
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/api/reports/EXECUTIVE` | Executive summary via factory (projects, budget, task health, recent activity) |
+| `GET` | `/api/reports/PROJECT` | Project-focused report (counts, task progress, overdue alerts) |
+| `GET` | `/api/reports/FINANCIAL` | Financial report (budget vs actual, cost utilisation %) |
+
+The existing `GET /api/reports/summary` endpoint was retained and still returns `ExecutiveSummaryDTO`.
+
+### Database changes
+
+Two nullable columns were added to existing tables (Hibernate DDL auto-update handles this on startup):
+
+| Table | Column | Purpose |
+|---|---|---|
+| `tasks` | `parent_task_id` (UUID, nullable) | Enables subtask relationships for the Composite tree |
+| `documents` | `storage_key` (VARCHAR, nullable) | Stores the file path/key used by the storage adapter so deletion works correctly |
 
 ---
 
@@ -277,31 +353,41 @@ const API_BASE_URL = 'http://localhost:8080/api';
 
 ### CORS Configuration
 
-Backend CORS is configured in `WebConfig.java` to allow:
-- `http://localhost:3000`
-- `http://localhost:3001`
+Allowed origins are configured in `application.properties` (not hard-coded):
+
+```properties
+app.cors.allowed-origins=http://localhost:3000,http://localhost:3001
+```
 
 ---
 
 ## 📁 Project Structure
 
 ```
-Constructflow Project management/
+Constructflow-Project-Management/
 ├── backend/
 │   ├── src/main/java/com/constructflow/
-│   │   ├── controller/          # REST API endpoints
+│   │   ├── controller/          # REST API endpoints (CORS handled globally)
 │   │   ├── service/             # Business logic layer
+│   │   │   ├── events/          # TaskMutatedEvent, ProgressRecalculator
+│   │   │   ├── factory/         # EntityFactory + concrete factories
+│   │   │   │   └── report/      # Abstract Factory — report families
+│   │   │   ├── iteration/       # PagedRepositoryIterator, ProjectScanner
+│   │   │   ├── mapping/         # XxxMapper components (one per aggregate)
+│   │   │   └── storage/         # DocumentStorage port + adapters
 │   │   ├── repository/          # Data access layer (JPA)
 │   │   ├── model/               # Entity classes
+│   │   │   └── work/            # Composite: WorkItem, LeafTask, CompositeTask
 │   │   ├── dto/                 # Data Transfer Objects
-│   │   └── config/              # Configuration classes
+│   │   ├── exception/           # GlobalExceptionHandler + domain exceptions
+│   │   └── config/              # WebConfig, AppProperties, StorageProperties
 │   ├── src/main/resources/
 │   │   └── application.properties
 │   └── pom.xml
 │
-└── construct-flow-wireframe (1)/
+└── construct-flow-nextjs-frontend/
     ├── app/                     # Next.js app directory
-    │   └── page.tsx            # Main application page
+    │   └── page.tsx             # Main application page
     ├── components/              # React components
     │   ├── dashboard.tsx
     │   ├── projects-section.tsx
@@ -311,9 +397,9 @@ Constructflow Project management/
     │   ├── reports-section.tsx
     │   └── ...more components
     ├── lib/                     # Utilities and services
-    │   ├── api-service.ts      # Backend API calls
-    │   ├── app-context.tsx     # Global state management
-    │   └── types.ts            # TypeScript interfaces
+    │   ├── api-service.ts       # Backend API calls
+    │   ├── app-context.tsx      # Global state management
+    │   └── types.ts             # TypeScript interfaces
     ├── package.json
     └── tailwind.config.ts
 ```
@@ -365,7 +451,11 @@ http://localhost:8080/api
 
 #### Analytics & Reports
 - `GET /analytics/dashboard` - Get dashboard statistics
-- `GET /analytics/advanced` - Get advanced analytics
+- `GET /analytics/advanced` - Get advanced analytics (sub-queries, joins)
+- `GET /reports/summary` - Executive summary DTO
+- `GET /reports/EXECUTIVE` - Executive report (Abstract Factory)
+- `GET /reports/PROJECT` - Project status report (Abstract Factory)
+- `GET /reports/FINANCIAL` - Financial report (Abstract Factory)
 
 #### Documents
 - `GET /documents` - List all documents
@@ -544,6 +634,19 @@ This project is under the standard MIT License.
 ---
 
 ## 🎉 Recent Updates
+
+### Version 0.0.4 - SOLID Refactor & Design Patterns
+- 🏛 Full SOLID compliance audit and remediation (13 violations closed)
+- 🔌 **Adapter**: `DocumentStorage` port decouples file I/O from `DocumentService`; filesystem deletion now works correctly
+- 🏭 **Factory Method**: `EntityFactory<E,D>` + `TaskFactory`, `ProjectFactory`, `ResourceFactory` centralise entity construction
+- 🎨 **Abstract Factory**: `ReportArtifactFactory` family — `GET /api/reports/{EXECUTIVE|PROJECT|FINANCIAL}`
+- 🔄 **Iterator**: `PagedRepositoryIterator` + `ProjectScanner` replace unsafe `findAll()` calls
+- 🌳 **Composite**: `WorkItem`/`LeafTask`/`CompositeTask` + `parentTaskId` — subtask-aware progress and cost aggregation
+- ⚡ **Event bus**: `TaskService` decoupled from `ProjectService` via Spring `ApplicationEventPublisher`
+- 🗺 **Mappers**: 9 `XxxMapper` components replace duplicated `mapToResponseDTO` methods
+- 🔒 **Security**: CORS wildcard removed; origins driven by `application.properties`
+- 📝 **Config**: Status strings and storage path externalised via `@ConfigurationProperties`
+- 🪵 **Logging**: `System.out.println` replaced with SLF4J throughout
 
 ### Version 0.0.3 - Discussion Threads
 - ✨ Added comment functionality to announcements
