@@ -1,5 +1,6 @@
 package com.constructflow.model;
 
+import com.constructflow.service.strategy.progress.ProgressModel;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -37,4 +38,8 @@ public class Project extends BaseEntity {
 
     @ElementCollection
     private java.util.List<String> milestones;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "progress_model")
+    private ProgressModel progressModel;
 }
