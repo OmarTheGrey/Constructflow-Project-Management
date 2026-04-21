@@ -3,6 +3,7 @@ package com.constructflow.controller;
 import com.constructflow.dto.TaskRequestDTO;
 import com.constructflow.dto.TaskResponseDTO;
 import com.constructflow.service.TaskService;
+import com.constructflow.service.strategy.prioritisation.PrioritisationKey;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -51,7 +52,8 @@ public class TaskController {
     }
 
     @GetMapping("/critical")
-    public ResponseEntity<List<TaskResponseDTO>> getCriticalTasks() {
-        return ResponseEntity.ok(taskService.getCriticalTasks());
+    public ResponseEntity<List<TaskResponseDTO>> getCriticalTasks(
+            @RequestParam(name = "sortBy", required = false) PrioritisationKey sortBy) {
+        return ResponseEntity.ok(taskService.getCriticalTasks(sortBy));
     }
 }

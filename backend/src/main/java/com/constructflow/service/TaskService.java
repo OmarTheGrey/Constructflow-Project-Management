@@ -8,6 +8,8 @@ import com.constructflow.repository.TaskRepository;
 import com.constructflow.service.events.TaskMutatedEvent;
 import com.constructflow.service.factory.TaskFactory;
 import com.constructflow.service.mapping.TaskMapper;
+import com.constructflow.service.strategy.prioritisation.PrioritisationKey;
+import com.constructflow.service.strategy.prioritisation.PrioritisationStrategyResolver;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
@@ -26,6 +28,7 @@ public class TaskService {
     private final TaskMapper taskMapper;
     private final TaskFactory taskFactory;
     private final ApplicationEventPublisher eventPublisher;
+    private final PrioritisationStrategyResolver prioritisationResolver;
 
     public Page<TaskResponseDTO> getAllTasks(Pageable pageable) {
         return taskRepository.findAll(pageable).map(taskMapper::toResponse);
@@ -71,8 +74,9 @@ public class TaskService {
                 .collect(Collectors.toList());
     }
 
-    public List<TaskResponseDTO> getCriticalTasks() {
-        return taskRepository.findCriticalTasks().stream()
+    public List<TaskResponseDTO> getCriticalTasks(PrioritisationKey sortKey) {
+        List<com.constructflow.model.Task> raw = taskRepository.findCriticalTasks();
+        return prioritisationResolver.resolve(sortKey).prioritise(raw).stream()
                 .map(taskMapper::toResponse)
                 .collect(Collectors.toList());
     }
