@@ -2,13 +2,14 @@ package com.constructflow.service;
 
 import com.constructflow.dto.ResourceRequestDTO;
 import com.constructflow.dto.ResourceResponseDTO;
-import com.constructflow.exception.InsufficientResourceException;
 import com.constructflow.exception.ResourceNotFoundException;
 import com.constructflow.model.Resource;
 import com.constructflow.repository.ResourceRepository;
 import com.constructflow.repository.TaskAllocationRepository;
 import com.constructflow.service.factory.ResourceFactory;
 import com.constructflow.service.mapping.ResourceMapper;
+import com.constructflow.service.template.allocation.AllocationRequest;
+import com.constructflow.service.template.allocation.AllocationValidatorRegistry;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,19 +24,19 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class ResourceService {
     private static final Logger log = LoggerFactory.getLogger(ResourceService.class);
+
     private final ResourceRepository resourceRepository;
     private final TaskAllocationRepository taskAllocationRepository;
     private final ResourceMapper resourceMapper;
     private final ResourceFactory resourceFactory;
+    private final AllocationValidatorRegistry allocationValidatorRegistry;
 
     @Transactional
     public void allocateResource(UUID taskId, UUID resourceId, Double quantity) {
-        Resource resource = resourceRepository.findById(resourceId)
-                .orElseThrow(() -> new ResourceNotFoundException("Resource", resourceId));
-
-        if (resource.getQuantity() < quantity) {
-            throw new InsufficientResourceException(resource.getName(), resource.getQuantity(), quantity);
-        }
+        AllocationRequest request = new AllocationRequest(taskId, resourceId, quantity);
+        Resource resource = allocationValidatorRegistry
+                .forCategory(resolveCategoryFor(resourceId))
+                .validate(request);
 
         resource.setQuantity(resource.getQuantity() - quantity);
         resourceRepository.save(resource);
@@ -46,6 +47,12 @@ public class ResourceService {
         allocation.setQuantityAllocated(quantity);
         allocation.setAllocatedAt(java.time.LocalDateTime.now());
         taskAllocationRepository.save(allocation);
+    }
+
+    private String resolveCategoryFor(UUID resourceId) {
+        return resourceRepository.findById(resourceId)
+                .map(Resource::getCategory)
+                .orElse(null);
     }
 
     @Transactional
