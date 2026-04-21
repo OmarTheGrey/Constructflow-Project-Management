@@ -19,6 +19,7 @@ public class Document extends BaseEntity {
     private String folder;
     private LocalDateTime uploadDate;
     private String size;
+    private String storageKey;
 
     @Column(name = "project_id")
     private UUID projectId;
