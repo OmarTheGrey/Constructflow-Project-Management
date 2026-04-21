@@ -1,5 +1,6 @@
 package com.constructflow.service;
 
+import com.constructflow.config.AppProperties;
 import com.constructflow.dto.ExecutiveSummaryDTO;
 import com.constructflow.model.Project;
 import com.constructflow.model.Task;
@@ -19,18 +20,22 @@ public class GlobalReportService {
 
     private final ProjectScanner projectScanner;
     private final TaskRepository taskRepository;
+    private final AppProperties appProperties;
 
     public ExecutiveSummaryDTO generateExecutiveSummary() {
+        String activeStatus    = appProperties.getStatus().getActive();
+        String inProgressStatus = appProperties.getStatus().getInProgress();
+        String completedStatus = appProperties.getStatus().getCompleted();
+
         ExecutiveSummaryDTO summary = new ExecutiveSummaryDTO();
 
-        long totalProjects = 0;
-        long activeProjects = 0;
-        double totalBudget = 0.0;
-        double totalActualCost = 0.0;
+        long totalProjects = 0, activeProjects = 0;
+        double totalBudget = 0.0, totalActualCost = 0.0;
 
         for (Project p : projectScanner) {
             totalProjects++;
-            if ("Active".equalsIgnoreCase(p.getStatus()) || "In Progress".equalsIgnoreCase(p.getStatus())) {
+            if (activeStatus.equalsIgnoreCase(p.getStatus())
+                    || inProgressStatus.equalsIgnoreCase(p.getStatus())) {
                 activeProjects++;
             }
             if (p.getBudget() != null)     totalBudget     += p.getBudget().doubleValue();
@@ -42,10 +47,7 @@ public class GlobalReportService {
         summary.setTotalBudget(totalBudget);
         summary.setTotalActualCost(totalActualCost);
 
-        // Task metrics — iterate all tasks via tree iterator
-        long completedTasks = 0;
-        long pendingTasks = 0;
-        long overdueTasks = 0;
+        long completedTasks = 0, pendingTasks = 0, overdueTasks = 0;
         List<Task> recentCandidates = new ArrayList<>();
 
         ProjectTaskTreeIterator taskIterator = new ProjectTaskTreeIterator(
@@ -53,7 +55,7 @@ public class GlobalReportService {
 
         while (taskIterator.hasNext()) {
             Task t = taskIterator.next();
-            if ("Completed".equalsIgnoreCase(t.getStatus())) {
+            if (completedStatus.equalsIgnoreCase(t.getStatus())) {
                 completedTasks++;
             } else {
                 pendingTasks++;

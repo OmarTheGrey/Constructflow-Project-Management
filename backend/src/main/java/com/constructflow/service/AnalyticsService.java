@@ -1,5 +1,6 @@
 package com.constructflow.service;
 
+import com.constructflow.config.AppProperties;
 import com.constructflow.model.Project;
 import com.constructflow.model.Task;
 import com.constructflow.repository.DailyLogRepository;
@@ -21,20 +22,23 @@ public class AnalyticsService {
     private final TaskRepository taskRepository;
     private final ResourceRepository resourceRepository;
     private final DailyLogRepository dailyLogRepository;
+    private final AppProperties appProperties;
 
     public Map<String, Object> getDashboardStats() {
+        String activeStatus    = appProperties.getStatus().getActive();
+        String completedStatus = appProperties.getStatus().getCompleted();
+
         Map<String, Object> stats = new HashMap<>();
 
-        long totalProjects = 0, activeProjects = 0;
+        long totalProjects = 0, activeProjects = 0, onScheduleCount = 0;
         BigDecimal totalBudget = BigDecimal.ZERO;
-        long onScheduleCount = 0;
 
         PagedRepositoryIterator<Project> projectIter =
                 new PagedRepositoryIterator<>(projectRepository::findAll, 100);
         while (projectIter.hasNext()) {
             Project p = projectIter.next();
             totalProjects++;
-            if ("Active".equalsIgnoreCase(p.getStatus())) activeProjects++;
+            if (activeStatus.equalsIgnoreCase(p.getStatus())) activeProjects++;
             if (p.getBudget() != null) totalBudget = totalBudget.add(p.getBudget());
             if (p.getProgress() != null && p.getProgress() >= 50) onScheduleCount++;
         }
@@ -45,7 +49,7 @@ public class AnalyticsService {
         while (taskIter.hasNext()) {
             Task t = taskIter.next();
             totalTasks++;
-            if (!"Completed".equalsIgnoreCase(t.getStatus())
+            if (!completedStatus.equalsIgnoreCase(t.getStatus())
                     && t.getDueDate() != null
                     && t.getDueDate().isBefore(java.time.LocalDate.now())) {
                 overdueTasks++;

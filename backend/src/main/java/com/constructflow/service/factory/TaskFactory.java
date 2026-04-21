@@ -7,12 +7,15 @@ import org.springframework.stereotype.Component;
 @Component
 public class TaskFactory implements EntityFactory<Task, TaskRequestDTO> {
 
+    private static final String DEFAULT_STATUS   = "Pending";
+    private static final String DEFAULT_PRIORITY = "Normal";
+
     @Override
     public Task create(TaskRequestDTO dto) {
         Task task = new Task();
         apply(task, dto);
-        if (task.getStatus() == null)   task.setStatus("Pending");
-        if (task.getPriority() == null) task.setPriority("Normal");
+        if (task.getStatus() == null)   task.setStatus(DEFAULT_STATUS);
+        if (task.getPriority() == null) task.setPriority(DEFAULT_PRIORITY);
         return task;
     }
 

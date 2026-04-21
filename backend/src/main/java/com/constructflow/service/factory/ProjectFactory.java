@@ -1,19 +1,24 @@
 package com.constructflow.service.factory;
 
+import com.constructflow.config.AppProperties;
 import com.constructflow.dto.ProjectRequestDTO;
 import com.constructflow.model.Project;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 
 @Component
+@RequiredArgsConstructor
 public class ProjectFactory implements EntityFactory<Project, ProjectRequestDTO> {
+
+    private final AppProperties appProperties;
 
     @Override
     public Project create(ProjectRequestDTO dto) {
         Project project = new Project();
         apply(project, dto);
-        if (project.getStatus() == null)     project.setStatus("Active");
+        if (project.getStatus() == null)     project.setStatus(appProperties.getStatus().getActive());
         if (project.getActualCost() == null) project.setActualCost(BigDecimal.ZERO);
         if (project.getProgress() == null)   project.setProgress(0.0);
         return project;
