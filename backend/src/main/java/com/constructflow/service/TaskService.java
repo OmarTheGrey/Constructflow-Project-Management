@@ -5,9 +5,11 @@ import com.constructflow.dto.TaskResponseDTO;
 import com.constructflow.exception.ResourceNotFoundException;
 import com.constructflow.model.Task;
 import com.constructflow.repository.TaskRepository;
+import com.constructflow.service.events.TaskMutatedEvent;
 import com.constructflow.service.factory.TaskFactory;
 import com.constructflow.service.mapping.TaskMapper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -21,9 +23,9 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class TaskService {
     private final TaskRepository taskRepository;
-    private final ProjectService projectService;
     private final TaskMapper taskMapper;
     private final TaskFactory taskFactory;
+    private final ApplicationEventPublisher eventPublisher;
 
     public Page<TaskResponseDTO> getAllTasks(Pageable pageable) {
         return taskRepository.findAll(pageable).map(taskMapper::toResponse);
@@ -38,7 +40,7 @@ public class TaskService {
     @Transactional
     public TaskResponseDTO createTask(TaskRequestDTO dto) {
         Task saved = taskRepository.save(taskFactory.create(dto));
-        projectService.updateProjectProgress(dto.getProjectId());
+        eventPublisher.publishEvent(new TaskMutatedEvent(saved.getProjectId()));
         return taskMapper.toResponse(saved);
     }
 
@@ -48,7 +50,7 @@ public class TaskService {
                 .orElseThrow(() -> new ResourceNotFoundException("Task not found"));
         taskFactory.apply(task, dto);
         Task updated = taskRepository.save(task);
-        projectService.updateProjectProgress(task.getProjectId());
+        eventPublisher.publishEvent(new TaskMutatedEvent(updated.getProjectId()));
         return taskMapper.toResponse(updated);
     }
 
@@ -58,7 +60,7 @@ public class TaskService {
         if (task != null) {
             UUID projectId = task.getProjectId();
             taskRepository.deleteById(id);
-            projectService.updateProjectProgress(projectId);
+            eventPublisher.publishEvent(new TaskMutatedEvent(projectId));
         }
     }
 
