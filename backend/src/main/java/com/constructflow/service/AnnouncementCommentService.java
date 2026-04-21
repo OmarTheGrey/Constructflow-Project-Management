@@ -6,6 +6,7 @@ import com.constructflow.model.Announcement;
 import com.constructflow.model.AnnouncementComment;
 import com.constructflow.repository.AnnouncementCommentRepository;
 import com.constructflow.repository.AnnouncementRepository;
+import com.constructflow.exception.ResourceNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,7 +35,7 @@ public class AnnouncementCommentService {
     @Transactional
     public CommentResponseDTO addComment(UUID announcementId, CommentRequestDTO dto) {
         Announcement announcement = announcementRepository.findById(announcementId)
-                .orElseThrow(() -> new RuntimeException("Announcement not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Announcement not found"));
 
         AnnouncementComment comment = new AnnouncementComment();
         comment.setAnnouncement(announcement);

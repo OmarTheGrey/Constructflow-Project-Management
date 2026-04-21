@@ -2,6 +2,7 @@ package com.constructflow.service;
 
 import com.constructflow.dto.ProjectRequestDTO;
 import com.constructflow.dto.ProjectResponseDTO;
+import com.constructflow.exception.ResourceNotFoundException;
 import com.constructflow.model.Project;
 import com.constructflow.repository.ProjectRepository;
 import com.constructflow.repository.TaskRepository;
@@ -29,7 +30,7 @@ public class ProjectService {
 
     public ProjectResponseDTO getProjectById(UUID id) {
         Project project = projectRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Project not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Project", id));
         return mapToResponseDTO(project);
     }
 
@@ -55,7 +56,7 @@ public class ProjectService {
     @Transactional
     public ProjectResponseDTO updateProject(UUID id, ProjectRequestDTO dto) {
         Project project = projectRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Project not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Project not found"));
 
         if (dto.getName() != null)
             project.setName(dto.getName());

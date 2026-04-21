@@ -2,6 +2,7 @@ package com.constructflow.service;
 
 import com.constructflow.dto.TaskRequestDTO;
 import com.constructflow.dto.TaskResponseDTO;
+import com.constructflow.exception.ResourceNotFoundException;
 import com.constructflow.model.Task;
 import com.constructflow.repository.TaskRepository;
 import lombok.RequiredArgsConstructor;
@@ -52,7 +53,7 @@ public class TaskService {
     @Transactional
     public TaskResponseDTO updateTask(UUID id, TaskRequestDTO dto) {
         Task task = taskRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Task not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Task not found"));
 
         if (dto.getName() != null)
             task.setName(dto.getName());

@@ -2,6 +2,8 @@ package com.constructflow.service;
 
 import com.constructflow.dto.ResourceRequestDTO;
 import com.constructflow.dto.ResourceResponseDTO;
+import com.constructflow.exception.InsufficientResourceException;
+import com.constructflow.exception.ResourceNotFoundException;
 import com.constructflow.model.Resource;
 import com.constructflow.repository.ResourceRepository;
 import lombok.RequiredArgsConstructor;
@@ -21,10 +23,10 @@ public class ResourceService {
     @Transactional
     public void allocateResource(UUID taskId, UUID resourceId, Double quantity) {
         Resource resource = resourceRepository.findById(resourceId)
-                .orElseThrow(() -> new RuntimeException("Resource not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Resource", resourceId));
 
         if (resource.getQuantity() < quantity) {
-            throw new RuntimeException("Insufficient resource quantity. Available: " + resource.getQuantity());
+            throw new InsufficientResourceException(resource.getName(), resource.getQuantity(), quantity);
         }
 
         // Deduct from available quantity
@@ -54,7 +56,7 @@ public class ResourceService {
     @Transactional
     public void updateInventory(UUID resourceId, Double quantityChange, String reason) {
         Resource resource = resourceRepository.findById(resourceId)
-                .orElseThrow(() -> new RuntimeException("Resource not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Resource", resourceId));
 
         resource.setQuantity(resource.getQuantity() + quantityChange);
         resourceRepository.save(resource);
@@ -84,7 +86,7 @@ public class ResourceService {
     @Transactional
     public ResourceResponseDTO updateResource(UUID id, ResourceRequestDTO dto) {
         Resource resource = resourceRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Resource not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Resource", id));
 
         resource.setName(dto.getName());
         resource.setCategory(dto.getCategory());
