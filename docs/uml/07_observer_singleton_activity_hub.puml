@@ -1,11 +1,10 @@
 @startuml observer_singleton_activity_hub
-title Observer + Singleton — Global activity stream (ActivityHub)
+title Observer + Singleton -- Global activity stream (ActivityHub)
 
 skinparam classAttributeIconSize 0
-skinparam classFontStyle bold
 skinparam backgroundColor white
 
-enum "ActivityHub\n<<enum singleton>>" as ActivityHub {
+enum ActivityHub <<singleton>> {
   INSTANCE
   - observers : List<ActivityObserver>
   + subscribe(observer : ActivityObserver)
@@ -21,14 +20,16 @@ interface ActivityObserver {
 
 class AuditLogObserver {
   + onActivity(activity)
-  + register() <<@PostConstruct>>
+  + register()
 }
+
 class DashboardCounterObserver {
   - counters : Map<String, AtomicLong>
   + onActivity(activity)
   + countOf(type : String) : long
   + snapshot() : Map<String, Long>
 }
+
 class OverdueAlertObserver {
   + onActivity(activity)
 }
@@ -36,11 +37,12 @@ class OverdueAlertObserver {
 interface Activity <<sealed>> {
   + at() : LocalDateTime
 }
-class "TaskCreated" as TaskCreated <<record>>
-class "TaskCompleted" as TaskCompleted <<record>>
-class "TaskOverdue" as TaskOverdue <<record>>
-class "ResourceAllocated" as ResourceAllocated <<record>>
-class "CommentPosted" as CommentPosted <<record>>
+
+class TaskCreated <<record>>
+class TaskCompleted <<record>>
+class TaskOverdue <<record>>
+class ResourceAllocated <<record>>
+class CommentPosted <<record>>
 
 class TaskService <<publisher>>
 class ResourceService <<publisher>>
@@ -56,11 +58,11 @@ Activity <|.. TaskOverdue
 Activity <|.. ResourceAllocated
 Activity <|.. CommentPosted
 
-ActivityHub o--> ActivityObserver : notifies every subscriber
+ActivityHub o--> ActivityObserver
 
-TaskService ..> ActivityHub : publish
-ResourceService ..> ActivityHub : publish
-AnnouncementCommentService ..> ActivityHub : publish
+TaskService ..> ActivityHub
+ResourceService ..> ActivityHub
+AnnouncementCommentService ..> ActivityHub
 
 note right of ActivityHub
   Enum-based Singleton (Effective Java, Item 3):

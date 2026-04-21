@@ -1,8 +1,7 @@
 @startuml mediator_discussion_room
-title Mediator — Announcement discussion room
+title Mediator -- Announcement discussion room
 
 skinparam classAttributeIconSize 0
-skinparam classFontStyle bold
 skinparam backgroundColor white
 
 interface DiscussionRoomMediator {
@@ -25,11 +24,21 @@ interface Participant {
   + name() : String
 }
 
-class AuthorParticipant
-class DashboardParticipant {
-  + commentsOn(announcementId) : long
+class AuthorParticipant {
+  + onCommentPosted(comment)
+  + name() : String
 }
-class ActivityRelayParticipant
+
+class DashboardParticipant {
+  + onCommentPosted(comment)
+  + commentsOn(announcementId) : long
+  + name() : String
+}
+
+class ActivityRelayParticipant {
+  + onCommentPosted(comment)
+  + name() : String
+}
 
 class AnnouncementCommentService <<client>> {
   + addComment(announcementId, dto) : CommentResponseDTO
@@ -41,9 +50,8 @@ Participant <|.. AuthorParticipant
 Participant <|.. DashboardParticipant
 Participant <|.. ActivityRelayParticipant
 
-AnnouncementRoom --> Participant : forwards to each
-
-AnnouncementCommentService --> DiscussionRoomMediator : thin forwarder
+AnnouncementRoom --> Participant
+AnnouncementCommentService --> DiscussionRoomMediator
 
 note right of AnnouncementRoom
   Participants never talk to each other.

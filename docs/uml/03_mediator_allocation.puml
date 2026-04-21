@@ -1,8 +1,7 @@
 @startuml mediator_allocation
-title Mediator — Resource-allocation workflow
+title Mediator -- Resource-allocation workflow
 
 skinparam classAttributeIconSize 0
-skinparam classFontStyle bold
 skinparam backgroundColor white
 
 interface AllocationMediator {
@@ -17,12 +16,15 @@ class ResourceColleague {
   + reserve(command) : Resource
   + categoryOf(resourceId) : String
 }
+
 class TaskAllocationColleague {
   + record(command) : TaskAllocation
 }
+
 class NotificationColleague {
   + broadcast(command)
 }
+
 class AuditColleague {
   + recordAllocation(command, resourceName)
 }
@@ -31,7 +33,11 @@ class ResourceService <<client>> {
   + allocateResource(taskId, resourceId, qty)
 }
 
-class AllocationCommand <<record>> { taskId; resourceId; quantity }
+class AllocationCommand <<record>> {
+  taskId : UUID
+  resourceId : UUID
+  quantity : double
+}
 
 AllocationMediator <|.. DefaultAllocationMediator
 
@@ -40,7 +46,7 @@ DefaultAllocationMediator --> TaskAllocationColleague
 DefaultAllocationMediator --> NotificationColleague
 DefaultAllocationMediator --> AuditColleague
 
-ResourceService --> AllocationMediator : single mediator call
+ResourceService --> AllocationMediator
 DefaultAllocationMediator ..> AllocationCommand
 
 note right of DefaultAllocationMediator

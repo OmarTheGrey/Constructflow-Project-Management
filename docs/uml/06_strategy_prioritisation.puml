@@ -1,8 +1,7 @@
 @startuml strategy_prioritisation
-title Strategy — Critical-task prioritisation
+title Strategy -- Critical-task prioritisation
 
 skinparam classAttributeIconSize 0
-skinparam classFontStyle bold
 skinparam backgroundColor white
 
 interface PrioritisationStrategy {
@@ -11,17 +10,24 @@ interface PrioritisationStrategy {
 }
 
 class DueDatePrioritisationStrategy {
-  + key() : DUE_DATE
+  + prioritise(tasks) : List<Task>
+  + key() : PrioritisationKey
 }
+
 class CostDescPrioritisationStrategy {
-  + key() : COST_DESC
+  + prioritise(tasks) : List<Task>
+  + key() : PrioritisationKey
 }
+
 class DependencyCountPrioritisationStrategy {
-  + key() : DEPENDENCIES
+  + prioritise(tasks) : List<Task>
+  + key() : PrioritisationKey
 }
+
 class RiskWeightedPrioritisationStrategy {
   - riskScore(task) : double
-  + key() : RISK
+  + prioritise(tasks) : List<Task>
+  + key() : PrioritisationKey
 }
 
 class PrioritisationStrategyResolver {
@@ -34,7 +40,7 @@ class TaskService <<client>> {
 }
 
 class TaskController <<client>> {
-  + getCriticalTasks(sortBy : PrioritisationKey) : ResponseEntity<List<TaskResponseDTO>>
+  + getCriticalTasks(sortBy : PrioritisationKey) : ResponseEntity
 }
 
 enum PrioritisationKey {

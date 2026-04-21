@@ -1,14 +1,13 @@
 @startuml document_export
-title Template Method — Document Export pipeline
+title Template Method -- Document Export pipeline
 
 skinparam classAttributeIconSize 0
-skinparam classFontStyle bold
 skinparam backgroundColor white
 
 abstract class AbstractDocumentExporter {
   # documentRepository : DocumentRepository
   # documentStorage : DocumentStorage
-  + {method} <b>export(request : ExportRequest) : ExportResult</b> <<final, template method>>
+  + export(request : ExportRequest) : ExportResult
   # validateAccess(request : ExportRequest)
   # resolveDocument(request : ExportRequest) : Document
   # loadContent(document : Document) : byte[]
@@ -18,21 +17,28 @@ abstract class AbstractDocumentExporter {
   # buildFilename(document : Document) : String
   # logExport(request : ExportRequest, filename : String)
 }
+note right of AbstractDocumentExporter::export
+  Final template method -- fixes the
+  validate -> resolve -> load -> transform -> log
+  skeleton. Subclasses override the abstract steps.
+end note
 
 class PdfDocumentExporter {
   # transform(document, raw) : byte[]
-  # contentType() : "application/pdf"
-  # fileExtension() : "pdf"
+  # contentType() : String
+  # fileExtension() : String
 }
+
 class CsvDocumentExporter {
   # transform(document, raw) : byte[]
-  # contentType() : "text/csv"
-  # fileExtension() : "csv"
+  # contentType() : String
+  # fileExtension() : String
 }
+
 class ZipArchiveExporter {
   # transform(document, raw) : byte[]
-  # contentType() : "application/zip"
-  # fileExtension() : "zip"
+  # contentType() : String
+  # fileExtension() : String
 }
 
 class DocumentExporterResolver {
@@ -44,16 +50,30 @@ class DocumentController <<client>> {
   + exportDocument(id, format, requestedBy) : ResponseEntity<byte[]>
 }
 
-enum ExportFormat { PDF; CSV; ZIP }
-class ExportRequest <<record>> { documentId; format; requestedBy }
-class ExportResult  <<record>> { filename; contentType; bytes }
+enum ExportFormat {
+  PDF
+  CSV
+  ZIP
+}
+
+class ExportRequest <<record>> {
+  documentId : UUID
+  format : ExportFormat
+  requestedBy : String
+}
+
+class ExportResult <<record>> {
+  filename : String
+  contentType : String
+  bytes : byte[]
+}
 
 AbstractDocumentExporter <|-- PdfDocumentExporter
 AbstractDocumentExporter <|-- CsvDocumentExporter
 AbstractDocumentExporter <|-- ZipArchiveExporter
 
 DocumentExporterResolver o--> AbstractDocumentExporter
-DocumentController --> DocumentExporterResolver : resolves
+DocumentController --> DocumentExporterResolver
 DocumentController ..> ExportRequest
 AbstractDocumentExporter ..> ExportRequest
 AbstractDocumentExporter ..> ExportResult

@@ -1,8 +1,7 @@
 @startuml strategy_progress
-title Strategy — Project-progress calculation
+title Strategy -- Project-progress calculation
 
 skinparam classAttributeIconSize 0
-skinparam classFontStyle bold
 skinparam backgroundColor white
 
 interface ProgressStrategy {
@@ -12,20 +11,23 @@ interface ProgressStrategy {
 
 class TaskCountProgressStrategy {
   + calculate(project, tasks) : double
-  + model() : TASK_COUNT
+  + model() : ProgressModel
 }
+
 class WeightedByCostProgressStrategy {
   + calculate(project, tasks) : double
-  + model() : WEIGHTED_BY_COST
+  + model() : ProgressModel
 }
+
 class MilestoneBasedProgressStrategy {
   + calculate(project, tasks) : double
-  + model() : MILESTONE_BASED
+  + model() : ProgressModel
 }
+
 class EffortBasedProgressStrategy {
   - workLogRepository : WorkLogRepository
   + calculate(project, tasks) : double
-  + model() : EFFORT_BASED
+  + model() : ProgressModel
 }
 
 class ProgressStrategyResolver {
@@ -50,7 +52,7 @@ ProgressStrategy <|.. MilestoneBasedProgressStrategy
 ProgressStrategy <|.. EffortBasedProgressStrategy
 
 ProgressStrategyResolver o--> ProgressStrategy
-ProjectService --> ProgressStrategyResolver : picks strategy per project
+ProjectService --> ProgressStrategyResolver
 ProgressStrategyResolver --> ProgressModel
 
 @enduml

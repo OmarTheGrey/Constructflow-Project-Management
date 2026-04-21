@@ -1,32 +1,38 @@
 @startuml allocation_validator
-title Template Method — Resource-allocation validation pipeline
+title Template Method -- Resource-allocation validation pipeline
 
 skinparam classAttributeIconSize 0
-skinparam classFontStyle bold
 skinparam backgroundColor white
 
 abstract class AbstractAllocationValidator {
   # resourceRepository : ResourceRepository
-  + {method} <b>validate(request : AllocationRequest) : Resource</b> <<final, template method>>
+  + validate(request : AllocationRequest) : Resource
   # checkBasicInputs(request)
   # resolveResource(request) : Resource
   # checkAvailability(resource, request)
   # {abstract} checkCategoryRules(resource, request)
-  # checkProjectBudget(resource, request)  <<hook, default no-op>>
+  # checkProjectBudget(resource, request)
   + {abstract} handlesCategory() : String
 }
+note right of AbstractAllocationValidator::validate
+  Final template method.
+  checkProjectBudget is an optional hook
+  with a default no-op implementation.
+end note
 
 class MaterialAllocationValidator {
   # checkCategoryRules(resource, request)
-  + handlesCategory() : "Material"
+  + handlesCategory() : String
 }
+
 class EquipmentAllocationValidator {
   # checkCategoryRules(resource, request)
-  + handlesCategory() : "Equipment"
+  + handlesCategory() : String
 }
+
 class LaborAllocationValidator {
   # checkCategoryRules(resource, request)
-  + handlesCategory() : "Labor"
+  + handlesCategory() : String
 }
 
 class AllocationValidatorRegistry {
@@ -38,14 +44,18 @@ class ResourceColleague <<client>> {
   + reserve(command : AllocationCommand) : Resource
 }
 
-class AllocationRequest <<record>> { taskId; resourceId; quantity }
+class AllocationRequest <<record>> {
+  taskId : UUID
+  resourceId : UUID
+  quantity : double
+}
 
 AbstractAllocationValidator <|-- MaterialAllocationValidator
 AbstractAllocationValidator <|-- EquipmentAllocationValidator
 AbstractAllocationValidator <|-- LaborAllocationValidator
 
 AllocationValidatorRegistry o--> AbstractAllocationValidator
-ResourceColleague --> AllocationValidatorRegistry : dispatches by category
+ResourceColleague --> AllocationValidatorRegistry
 AbstractAllocationValidator ..> AllocationRequest
 
 @enduml
