@@ -1,84 +1,81 @@
 package com.constructflow.service;
 
 import com.constructflow.dto.ExecutiveSummaryDTO;
-import com.constructflow.repository.ProjectRepository;
-import com.constructflow.repository.TaskRepository;
-import com.constructflow.repository.ResourceRepository;
 import com.constructflow.model.Project;
 import com.constructflow.model.Task;
+import com.constructflow.repository.TaskRepository;
+import com.constructflow.service.iteration.ProjectScanner;
+import com.constructflow.service.iteration.ProjectTaskTreeIterator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class GlobalReportService {
 
-        private final ProjectRepository projectRepository;
-        private final TaskRepository taskRepository;
+    private final ProjectScanner projectScanner;
+    private final TaskRepository taskRepository;
 
-        public ExecutiveSummaryDTO generateExecutiveSummary() {
-                ExecutiveSummaryDTO summary = new ExecutiveSummaryDTO();
+    public ExecutiveSummaryDTO generateExecutiveSummary() {
+        ExecutiveSummaryDTO summary = new ExecutiveSummaryDTO();
 
-                // Project Metrics
-                List<Project> allProjects = projectRepository.findAll();
-                System.out.println("DEBUG: Found " + allProjects.size() + " projects.");
-                for (Project p : allProjects) {
-                        System.out.println("DEBUG: Project '" + p.getName() + "' - Status: '" + p.getStatus()
-                                        + "', Budget: " + p.getBudget() + ", ActualCost: " + p.getActualCost());
-                }
+        long totalProjects = 0;
+        long activeProjects = 0;
+        double totalBudget = 0.0;
+        double totalActualCost = 0.0;
 
-                summary.setTotalProjects(allProjects.size());
-                // Try matching both "Active" and "In Progress" or generic check
-                long activeCount = allProjects.stream()
-                                .filter(p -> "Active".equalsIgnoreCase(p.getStatus())
-                                                || "In Progress".equalsIgnoreCase(p.getStatus()))
-                                .count();
-                System.out.println("DEBUG: Active Projects Count: " + activeCount);
-                summary.setActiveProjects(activeCount);
-
-                // Financial Metrics
-                summary.setTotalBudget(allProjects.stream()
-                                .mapToDouble(p -> p.getBudget() != null ? p.getBudget().doubleValue() : 0.0)
-                                .sum());
-                summary.setTotalActualCost(
-                                allProjects.stream()
-                                                .mapToDouble(p -> p.getActualCost() != null
-                                                                ? p.getActualCost().doubleValue()
-                                                                : 0.0)
-                                                .sum());
-
-                // Task Metrics
-                List<Task> allTasks = taskRepository.findAll();
-                summary.setCompletedTasks(
-                                allTasks.stream().filter(t -> "Completed".equalsIgnoreCase(t.getStatus())).count());
-                summary.setPendingTasks(
-                                allTasks.stream().filter(t -> !"Completed".equalsIgnoreCase(t.getStatus())).count());
-
-                // Alerts: Tasks overdue
-                long overdueTasks = allTasks.stream()
-                                .filter(t -> t.getDueDate() != null
-                                                && t.getDueDate().isBefore(java.time.LocalDate.now())
-                                                && !"Completed".equalsIgnoreCase(t.getStatus()))
-                                .count();
-                summary.setCriticalAlerts(overdueTasks);
-
-                // Recent Activities: Last 5 modified tasks
-                List<String> activities = allTasks.stream()
-                                .sorted((t1, t2) -> {
-                                        if (t1.getLastModifiedAt() == null)
-                                                return 1;
-                                        if (t2.getLastModifiedAt() == null)
-                                                return -1;
-                                        return t2.getLastModifiedAt().compareTo(t1.getLastModifiedAt());
-                                })
-                                .limit(5)
-                                .map(t -> "Task updated: " + t.getName() + " (" + t.getStatus() + ")")
-                                .collect(java.util.stream.Collectors.toList());
-                summary.setRecentActivities(activities);
-
-                System.out.println("Generated Report Summary: " + summary);
-                return summary;
+        for (Project p : projectScanner) {
+            totalProjects++;
+            if ("Active".equalsIgnoreCase(p.getStatus()) || "In Progress".equalsIgnoreCase(p.getStatus())) {
+                activeProjects++;
+            }
+            if (p.getBudget() != null)     totalBudget     += p.getBudget().doubleValue();
+            if (p.getActualCost() != null) totalActualCost += p.getActualCost().doubleValue();
         }
+
+        summary.setTotalProjects(totalProjects);
+        summary.setActiveProjects(activeProjects);
+        summary.setTotalBudget(totalBudget);
+        summary.setTotalActualCost(totalActualCost);
+
+        // Task metrics — iterate all tasks via tree iterator
+        long completedTasks = 0;
+        long pendingTasks = 0;
+        long overdueTasks = 0;
+        List<Task> recentCandidates = new ArrayList<>();
+
+        ProjectTaskTreeIterator taskIterator = new ProjectTaskTreeIterator(
+                projectScanner.iterator(), taskRepository);
+
+        while (taskIterator.hasNext()) {
+            Task t = taskIterator.next();
+            if ("Completed".equalsIgnoreCase(t.getStatus())) {
+                completedTasks++;
+            } else {
+                pendingTasks++;
+                if (t.getDueDate() != null && t.getDueDate().isBefore(java.time.LocalDate.now())) {
+                    overdueTasks++;
+                }
+            }
+            recentCandidates.add(t);
+        }
+
+        summary.setCompletedTasks(completedTasks);
+        summary.setPendingTasks(pendingTasks);
+        summary.setCriticalAlerts(overdueTasks);
+
+        List<String> activities = recentCandidates.stream()
+                .filter(t -> t.getLastModifiedAt() != null)
+                .sorted(Comparator.comparing(Task::getLastModifiedAt).reversed())
+                .limit(5)
+                .map(t -> "Task updated: " + t.getName() + " (" + t.getStatus() + ")")
+                .toList();
+        summary.setRecentActivities(activities);
+
+        return summary;
+    }
 }
