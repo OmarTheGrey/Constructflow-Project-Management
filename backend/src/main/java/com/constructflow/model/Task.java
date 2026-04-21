@@ -23,6 +23,9 @@ public class Task extends BaseEntity {
     @Column(name = "project_id")
     private UUID projectId;
 
+    @Column(name = "parent_task_id")
+    private UUID parentTaskId;
+
     private String assignee;
     private LocalDate dueDate;
     private String status;
