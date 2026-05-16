@@ -1,0 +1,1047 @@
+openapi: 3.0.3
+info:
+  title: ConstructFlow REST API
+  description: |
+    Service-Oriented backend for the ConstructFlow construction project management
+    system. Documented for C-SW311 Software Design & Development, Deliverable #5
+    (Service-Oriented Software Engineering).
+
+    The spec covers the Project Service and Resource Service (the two services
+    featured in the technical report) plus all other supporting controllers and
+    the Project Kickoff composite service.
+  version: 1.0.0
+  contact:
+    name: ConstructFlow Team
+    email: team@constructflow.local
+  license:
+    name: MIT
+servers:
+  - url: http://localhost:8080
+    description: Local development server
+tags:
+  - name: Project Service
+    description: Business service. Manages Project entities and their lifecycle.
+  - name: Task Service
+    description: Business service. Manages Tasks scoped to a Project.
+  - name: Resource Service
+    description: Utility service. Manages resources (materials, equipment, labor) and allocations.
+  - name: Document Service
+    description: Utility service. Upload, list, delete and export documents.
+  - name: Stakeholder Service
+    description: Utility service. Project stakeholders.
+  - name: Announcement Service
+    description: Coordination service. Announcements and discussion threads.
+  - name: Daily Log Service
+    description: Utility service. Per-task daily progress logs.
+  - name: Daily Report Service
+    description: Business service. Daily project reports.
+  - name: Work Log Service
+    description: Utility service. Per-task work entries.
+  - name: Report Service
+    description: Coordination service. Executive summaries and report generation.
+  - name: Search Service
+    description: Utility service. Global search across all entities.
+  - name: Analytics Service
+    description: Coordination service. Dashboard analytics.
+  - name: Composite Services
+    description: Workflow endpoints that orchestrate multiple atomic services.
+
+paths:
+  # ===== Project Service =====
+  /api/projects:
+    get:
+      tags: [Project Service]
+      summary: List projects (paged)
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+        - $ref: '#/components/parameters/SortParam'
+      responses:
+        '200':
+          description: Paged list of projects
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageOfProjectResponse'
+    post:
+      tags: [Project Service]
+      summary: Create a project
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProjectRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+
+  /api/projects/{id}:
+    parameters:
+      - $ref: '#/components/parameters/IdPath'
+    get:
+      tags: [Project Service]
+      summary: Get a project by id
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Project Service]
+      summary: Update a project
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProjectRequest'
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Project Service]
+      summary: Delete a project
+      responses:
+        '204':
+          description: No Content
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ===== Task Service =====
+  /api/tasks:
+    get:
+      tags: [Task Service]
+      summary: List tasks (paged)
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+        - $ref: '#/components/parameters/SortParam'
+      responses:
+        '200':
+          description: Paged list of tasks
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageOfTaskResponse'
+    post:
+      tags: [Task Service]
+      summary: Create a task
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+
+  /api/tasks/{id}:
+    parameters:
+      - $ref: '#/components/parameters/IdPath'
+    put:
+      tags: [Task Service]
+      summary: Update a task
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskRequest'
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Task Service]
+      summary: Delete a task
+      responses:
+        '204':
+          description: No Content
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/tasks/project/{projectId}:
+    parameters:
+      - name: projectId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    get:
+      tags: [Task Service]
+      summary: List tasks under a project
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TaskResponse'
+
+  /api/tasks/critical:
+    get:
+      tags: [Task Service]
+      summary: List critical tasks
+      parameters:
+        - name: sortBy
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [DUE_DATE, PRIORITY, COST]
+            description: Prioritisation strategy key. Optional.
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TaskResponse'
+
+  # ===== Resource Service =====
+  /api/resources:
+    get:
+      tags: [Resource Service]
+      summary: List resources (paged)
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+      responses:
+        '200':
+          description: Paged list of resources
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageOfResourceResponse'
+    post:
+      tags: [Resource Service]
+      summary: Create a resource
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResourceRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+
+  /api/resources/{id}:
+    parameters:
+      - $ref: '#/components/parameters/IdPath'
+    put:
+      tags: [Resource Service]
+      summary: Update a resource
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResourceRequest'
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Resource Service]
+      summary: Delete a resource
+      responses:
+        '204':
+          description: No Content
+
+  /api/resources/allocate:
+    post:
+      tags: [Resource Service]
+      summary: Allocate a resource to a task
+      parameters:
+        - name: taskId
+          in: query
+          required: true
+          schema: { type: string, format: uuid }
+        - name: resourceId
+          in: query
+          required: true
+          schema: { type: string, format: uuid }
+        - name: quantity
+          in: query
+          required: true
+          schema: { type: number, format: double, minimum: 0 }
+      responses:
+        '200':
+          description: Allocated
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  /api/resources/{id}/inventory:
+    parameters:
+      - $ref: '#/components/parameters/IdPath'
+    post:
+      tags: [Resource Service]
+      summary: Adjust resource inventory
+      parameters:
+        - name: quantityChange
+          in: query
+          required: true
+          schema: { type: number, format: double }
+          description: Positive to add inventory, negative to deduct.
+        - name: reason
+          in: query
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Inventory updated
+
+  # ===== Composite Service =====
+  /api/compositions/project-kickoff:
+    post:
+      tags: [Composite Services]
+      summary: Project Kickoff composite — create project, initial tasks and initial allocations in one transaction
+      description: |
+        Orchestrates three internal services (ProjectService, TaskService and
+        ResourceService) under a single @Transactional boundary. The body
+        contains the project payload, an optional list of initial tasks, and an
+        optional list of initial allocations (each pointing to a taskIndex into
+        initialTasks). Any failure in an underlying call rolls back the whole
+        workflow.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProjectKickoffRequest'
+            examples:
+              warehouseKickoff:
+                summary: Greenfield warehouse kickoff
+                value:
+                  project:
+                    name: Greenfield Warehouse
+                    client: Globex Logistics
+                    location: Alexandria, Egypt
+                    budget: 1200000
+                    startDate: 2026-07-01
+                    endDate: 2026-12-01
+                    status: Active
+                    objectives: Build 5,000 sqm cold-storage warehouse.
+                    milestones: [Earthworks, Structure, Cooling, Handover]
+                  initialTasks:
+                    - { name: Site survey, assignee: Site Engineer A, dueDate: 2026-07-10, status: Pending, priority: High, description: Topographic survey }
+                    - { name: Procure rebar, assignee: Procurement Lead, dueDate: 2026-07-20, status: Pending, priority: Critical, description: Order 5 tons of rebar }
+                  initialAllocations:
+                    - { taskIndex: 1, resourceId: 11111111-2222-3333-4444-555555555555, quantity: 1500 }
+      responses:
+        '201':
+          description: Composite workflow completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectKickoffResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+
+  # ===== Document Service =====
+  /api/documents/project/{projectId}:
+    parameters:
+      - name: projectId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    get:
+      tags: [Document Service]
+      summary: List documents under a project
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/DocumentResponse' }
+
+  /api/documents:
+    post:
+      tags: [Document Service]
+      summary: Upload a document (multipart)
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file, projectId, folder, type]
+              properties:
+                file:      { type: string, format: binary }
+                projectId: { type: string, format: uuid }
+                folder:    { type: string }
+                type:      { type: string }
+      responses:
+        '201':
+          description: Created
+
+  /api/documents/{id}:
+    parameters:
+      - $ref: '#/components/parameters/IdPath'
+    delete:
+      tags: [Document Service]
+      summary: Delete a document
+      responses:
+        '204':
+          description: No Content
+
+  /api/documents/{id}/export:
+    parameters:
+      - $ref: '#/components/parameters/IdPath'
+    get:
+      tags: [Document Service]
+      summary: Export a document in a given format
+      parameters:
+        - name: format
+          in: query
+          required: false
+          schema: { type: string, enum: [PDF, CSV, ZIP], default: PDF }
+        - name: requestedBy
+          in: query
+          required: false
+          schema: { type: string, default: system }
+      responses:
+        '200':
+          description: Exported file
+          content:
+            application/octet-stream:
+              schema: { type: string, format: binary }
+
+  # ===== Stakeholder Service =====
+  /api/stakeholders/project/{projectId}:
+    parameters:
+      - name: projectId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    get:
+      tags: [Stakeholder Service]
+      summary: List stakeholders under a project
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/StakeholderResponse' }
+
+  /api/stakeholders:
+    post:
+      tags: [Stakeholder Service]
+      summary: Create a stakeholder
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/StakeholderRequest' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/StakeholderResponse' }
+
+  /api/stakeholders/{id}:
+    parameters:
+      - $ref: '#/components/parameters/IdPath'
+    delete:
+      tags: [Stakeholder Service]
+      summary: Delete a stakeholder
+      responses:
+        '204':
+          description: No Content
+
+  # ===== Announcement Service =====
+  /api/announcements:
+    get:
+      tags: [Announcement Service]
+      summary: List announcements
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/AnnouncementResponse' }
+    post:
+      tags: [Announcement Service]
+      summary: Create an announcement
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AnnouncementRequest' }
+      responses:
+        '201':
+          description: Created
+
+  /api/announcements/{id}:
+    parameters:
+      - $ref: '#/components/parameters/IdPath'
+    delete:
+      tags: [Announcement Service]
+      summary: Delete an announcement
+      responses:
+        '204':
+          description: No Content
+
+  /api/announcements/{announcementId}/comments:
+    parameters:
+      - name: announcementId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    get:
+      tags: [Announcement Service]
+      summary: List comments on an announcement
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/CommentResponse' }
+    post:
+      tags: [Announcement Service]
+      summary: Add a comment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CommentRequest' }
+      responses:
+        '201':
+          description: Created
+
+  /api/announcements/comments/{commentId}:
+    parameters:
+      - name: commentId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    delete:
+      tags: [Announcement Service]
+      summary: Delete a comment
+      responses:
+        '204':
+          description: No Content
+
+  # ===== Daily Log Service =====
+  /api/logs/task/{taskId}:
+    parameters:
+      - name: taskId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    get:
+      tags: [Daily Log Service]
+      summary: List daily logs for a task
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { type: object }
+
+  /api/logs:
+    post:
+      tags: [Daily Log Service]
+      summary: Create a daily log
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object }
+      responses:
+        '201':
+          description: Created
+
+  /api/logs/{id}:
+    parameters:
+      - $ref: '#/components/parameters/IdPath'
+    delete:
+      tags: [Daily Log Service]
+      summary: Delete a daily log
+      responses:
+        '204':
+          description: No Content
+
+  # ===== Daily Report Service =====
+  /api/daily-reports/project/{projectId}:
+    parameters:
+      - name: projectId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    get:
+      tags: [Daily Report Service]
+      summary: List daily reports for a project
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { type: object }
+
+  /api/daily-reports:
+    post:
+      tags: [Daily Report Service]
+      summary: Create a daily report
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object }
+      responses:
+        '201':
+          description: Created
+
+  # ===== Work Log Service =====
+  /api/work-logs/task/{taskId}:
+    parameters:
+      - name: taskId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    get:
+      tags: [Work Log Service]
+      summary: List work logs for a task
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { type: object }
+
+  /api/work-logs:
+    post:
+      tags: [Work Log Service]
+      summary: Create a work log
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object }
+      responses:
+        '201':
+          description: Created
+
+  # ===== Report Service =====
+  /api/reports/summary:
+    get:
+      tags: [Report Service]
+      summary: Executive summary dashboard
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ExecutiveSummary' }
+
+  /api/reports/{kind}:
+    parameters:
+      - name: kind
+        in: path
+        required: true
+        schema:
+          type: string
+          enum: [PROJECT_HEALTH, RESOURCE_USAGE, BUDGET_BURN]
+    get:
+      tags: [Report Service]
+      summary: Generate a report of the given kind
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+
+  # ===== Search Service =====
+  /api/search:
+    get:
+      tags: [Search Service]
+      summary: Global keyword search across all entities
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+
+  # ===== Analytics Service =====
+  /api/analytics/dashboard:
+    get:
+      tags: [Analytics Service]
+      summary: Dashboard analytics summary
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+
+  /api/analytics/advanced:
+    get:
+      tags: [Analytics Service]
+      summary: Advanced analytics
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+
+components:
+  parameters:
+    PageParam:
+      name: page
+      in: query
+      required: false
+      schema: { type: integer, minimum: 0, default: 0 }
+    SizeParam:
+      name: size
+      in: query
+      required: false
+      schema: { type: integer, minimum: 1, maximum: 200, default: 10 }
+    SortParam:
+      name: sort
+      in: query
+      required: false
+      schema: { type: string }
+      description: "Spring Data sort spec, e.g. 'name,asc' or 'dueDate,desc'."
+    IdPath:
+      name: id
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+
+  responses:
+    ValidationError:
+      description: Bean Validation error
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ApiError' }
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ApiError' }
+    Conflict:
+      description: Business-rule violation (e.g. insufficient inventory)
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ApiError' }
+
+  schemas:
+    ApiError:
+      type: object
+      properties:
+        timestamp: { type: string, format: date-time }
+        status:    { type: integer }
+        error:     { type: string }
+        message:   { type: string }
+        path:      { type: string }
+
+    # ---- Project ----
+    ProjectRequest:
+      type: object
+      required: [name]
+      properties:
+        name:       { type: string, minLength: 3, maxLength: 100 }
+        client:     { type: string }
+        location:   { type: string }
+        budget:     { type: number, format: double, minimum: 0 }
+        startDate:  { type: string, format: date }
+        endDate:    { type: string, format: date }
+        status:     { type: string, enum: [Active, "In Progress", Completed] }
+        objectives: { type: string }
+        milestones:
+          type: array
+          items: { type: string }
+    ProjectResponse:
+      type: object
+      properties:
+        id:             { type: string, format: uuid }
+        name:           { type: string }
+        client:         { type: string }
+        location:       { type: string }
+        budget:         { type: number, format: double }
+        actualCost:     { type: number, format: double }
+        startDate:      { type: string, format: date }
+        endDate:        { type: string, format: date }
+        progress:       { type: number, format: double }
+        status:         { type: string }
+        createdAt:      { type: string, format: date-time }
+        lastModifiedAt: { type: string, format: date-time }
+        objectives:     { type: string }
+        milestones:
+          type: array
+          items: { type: string }
+    PageOfProjectResponse:
+      $ref: '#/components/schemas/PageEnvelope'
+
+    # ---- Task ----
+    TaskRequest:
+      type: object
+      properties:
+        name:        { type: string }
+        projectId:   { type: string, format: uuid }
+        assignee:    { type: string }
+        dueDate:     { type: string, format: date }
+        status:      { type: string, enum: [Pending, "In Progress", Completed] }
+        priority:    { type: string, enum: [Low, Medium, High, Critical] }
+        description: { type: string }
+        actualCost:  { type: number, format: double, minimum: 0 }
+        dependencies:
+          type: array
+          items: { type: string }
+    TaskResponse:
+      type: object
+      properties:
+        id:          { type: string, format: uuid }
+        name:        { type: string }
+        projectId:   { type: string, format: uuid }
+        assignee:    { type: string }
+        dueDate:     { type: string, format: date }
+        status:      { type: string }
+        priority:    { type: string }
+        description: { type: string }
+        actualCost:  { type: number, format: double }
+        createdAt:   { type: string, format: date-time }
+        dependencies:
+          type: array
+          items: { type: string }
+    PageOfTaskResponse:
+      $ref: '#/components/schemas/PageEnvelope'
+
+    # ---- Resource ----
+    ResourceRequest:
+      type: object
+      required: [name, category, quantity, unit]
+      properties:
+        name:                 { type: string }
+        category:             { type: string, enum: [Material, Equipment, Labor] }
+        quantity:             { type: number, format: double, minimum: 0 }
+        unit:                 { type: string }
+        allocationPercentage: { type: number, format: double, minimum: 0, maximum: 100 }
+        cost:                 { type: number, format: double, minimum: 0 }
+        projectId:            { type: string, format: uuid }
+    ResourceResponse:
+      type: object
+      properties:
+        id:                   { type: string, format: uuid }
+        name:                 { type: string }
+        category:             { type: string }
+        quantity:             { type: number, format: double }
+        unit:                 { type: string }
+        allocationPercentage: { type: number, format: double }
+        cost:                 { type: number, format: double }
+        projectId:            { type: string, format: uuid }
+    PageOfResourceResponse:
+      $ref: '#/components/schemas/PageEnvelope'
+
+    # ---- Composite ----
+    ProjectKickoffRequest:
+      type: object
+      required: [project]
+      properties:
+        project: { $ref: '#/components/schemas/ProjectRequest' }
+        initialTasks:
+          type: array
+          items:
+            type: object
+            properties:
+              name:        { type: string }
+              assignee:    { type: string }
+              dueDate:     { type: string, format: date }
+              status:      { type: string }
+              priority:    { type: string }
+              description: { type: string }
+        initialAllocations:
+          type: array
+          items:
+            type: object
+            required: [taskIndex, resourceId, quantity]
+            properties:
+              taskIndex:  { type: integer, minimum: 0, description: 0-based index into initialTasks }
+              resourceId: { type: string, format: uuid }
+              quantity:   { type: number, format: double, minimum: 0 }
+    ProjectKickoffResponse:
+      type: object
+      properties:
+        project: { $ref: '#/components/schemas/ProjectResponse' }
+        tasks:
+          type: array
+          items: { $ref: '#/components/schemas/TaskResponse' }
+        allocations:
+          type: array
+          items:
+            type: object
+            properties:
+              taskId:     { type: string, format: uuid, nullable: true }
+              resourceId: { type: string, format: uuid }
+              quantity:   { type: number, format: double }
+              status:     { type: string, description: "ALLOCATED or FAILED:<reason>" }
+
+    # ---- Document / Stakeholder / Announcement / Comment / Report ----
+    DocumentResponse:
+      type: object
+      properties:
+        id:        { type: string, format: uuid }
+        name:      { type: string }
+        projectId: { type: string, format: uuid }
+        folder:    { type: string }
+        type:      { type: string }
+        size:      { type: integer, format: int64 }
+        uploadedAt: { type: string, format: date-time }
+
+    StakeholderRequest:
+      type: object
+      required: [name, projectId]
+      properties:
+        name:      { type: string }
+        role:      { type: string }
+        company:   { type: string }
+        email:     { type: string, format: email }
+        phone:     { type: string }
+        projectId: { type: string, format: uuid }
+    StakeholderResponse:
+      type: object
+      properties:
+        id:        { type: string, format: uuid }
+        name:      { type: string }
+        role:      { type: string }
+        company:   { type: string }
+        email:     { type: string }
+        phone:     { type: string }
+        projectId: { type: string, format: uuid }
+
+    AnnouncementRequest:
+      type: object
+      required: [title, content]
+      properties:
+        title:    { type: string }
+        content:  { type: string }
+        priority: { type: string }
+        author:   { type: string }
+    AnnouncementResponse:
+      type: object
+      properties:
+        id:        { type: string, format: uuid }
+        title:     { type: string }
+        content:   { type: string }
+        priority:  { type: string }
+        author:    { type: string }
+        createdAt: { type: string, format: date-time }
+
+    CommentRequest:
+      type: object
+      properties:
+        content: { type: string }
+        author:  { type: string }
+    CommentResponse:
+      type: object
+      properties:
+        id:        { type: string, format: uuid }
+        content:   { type: string }
+        author:    { type: string }
+        createdAt: { type: string, format: date-time }
+
+    ExecutiveSummary:
+      type: object
+      additionalProperties: true
+      description: |
+        Aggregated KPIs: totalBudget, activeProjectCount, pendingTaskCount,
+        criticalTaskCount, overdueTasks, budgetUtilizationPercent, etc.
+
+    PageEnvelope:
+      type: object
+      description: Spring Data Page wrapper
+      properties:
+        content:
+          type: array
+          items: { type: object }
+        pageable:
+          type: object
+          additionalProperties: true
+        totalPages:    { type: integer }
+        totalElements: { type: integer, format: int64 }
+        number:        { type: integer }
+        size:          { type: integer }
+        first:         { type: boolean }
+        last:          { type: boolean }
+        empty:         { type: boolean }
