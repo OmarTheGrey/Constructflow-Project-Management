@@ -58,6 +58,23 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       setTasks(t);
       setResources(r);
       setAnnouncements(a);
+
+      // Backend has no "list all documents" endpoint, only per-project.
+      // Fan out and concatenate so the documents array is populated at
+      // startup instead of staying empty until a manual upload.
+      try {
+        const perProject = await Promise.all(
+          (p as { id: string }[]).map((proj) =>
+            DocumentService.getDocumentsByProject(proj.id).catch((err) => {
+              console.error(`Failed to fetch documents for project ${proj.id}`, err);
+              return [];
+            })
+          )
+        );
+        setDocuments(perProject.flat());
+      } catch (docErr) {
+        console.error("Failed to fan-out document load", docErr);
+      }
     } catch (error) {
       console.error("Failed to refresh data", error);
     }
