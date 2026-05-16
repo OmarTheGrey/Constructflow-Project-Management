@@ -107,7 +107,7 @@ export function Dashboard({ onNewProject }: { onNewProject: () => void }) {
                   <p className="text-xs text-muted-foreground mt-1">{overdueTasks} tasks past due date</p>
                 </div>
               )}
-              {resources.some((r) => (r.allocated / r.quantity) * 100 > 80) && (
+              {resources.some((r) => (r.allocationPercentage ?? 0) > 80) && (
                 <div className="p-3 bg-amber-50 border border-amber-200 rounded-md">
                   <p className="text-sm font-medium text-foreground">Resource pressure</p>
                   <p className="text-xs text-muted-foreground mt-1">Some resources over 80% utilization</p>

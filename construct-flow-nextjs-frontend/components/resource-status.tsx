@@ -5,16 +5,15 @@ import { useApp } from "@/lib/app-context"
 export function ResourceStatus() {
   const { resources } = useApp()
 
-  const utilization = (allocated: number, quantity: number) => {
-    return Math.round((allocated / quantity) * 100)
-  }
+  // Resource.allocationPercentage is already a 0-100 percentage from the backend.
+  const utilization = (allocationPercentage: number) => Math.round(allocationPercentage ?? 0)
 
   return (
     <div className="bg-card p-6 rounded-lg border border-border">
       <h3 className="text-lg font-bold text-foreground mb-6">Resource Allocation</h3>
       <div className="space-y-4">
         {resources.slice(0, 4).map((resource) => {
-          const util = utilization(resource.allocated, resource.quantity)
+          const util = utilization(resource.allocationPercentage)
           return (
             <div key={resource.id} className="space-y-2">
               <div className="flex justify-between items-center">

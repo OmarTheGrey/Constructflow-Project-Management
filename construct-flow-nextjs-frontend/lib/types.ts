@@ -22,8 +22,10 @@ export interface Task {
   description: string
   assignee: string
   dueDate: string
+  // Must match backend casing - see TASK_STATUS in constants.ts and the
+  // values rendered by TaskController.getCriticalTasks (priority "Critical").
   status: "Pending" | "In Progress" | "Completed"
-  priority: "Low" | "Normal" | "High"
+  priority: "Low" | "Medium" | "High" | "Critical"
   actualCost: number
   dependencies: string[]
   createdAt?: string
@@ -32,11 +34,13 @@ export interface Task {
 export interface Resource {
   id: string // UUID
   name: string
-  category: string // Changed from type to match backend DTO
+  category: string // Material | Equipment | Labor — matches backend ResourceRequestDTO.category
   quantity: number
   unit: string
-  allocated: number
+  // Percentage 0-100. Maps to backend ResourceResponseDTO.allocationPercentage.
+  allocationPercentage: number
   cost: number
+  projectId?: string
   createdAt?: string
 }
 
@@ -54,9 +58,11 @@ export interface Document {
 export interface Announcement {
   id: string
   title: string
-  message: string
-  content?: string  // Alias for message
+  // Matches backend AnnouncementRequestDTO.content / AnnouncementResponseDTO.content.
+  content: string
   priority: string
+  // Backend ResponseDTO uses createdAt (ISO date-time); kept here under the
+  // legacy field name datePosted so existing components don't break.
   datePosted: string
   author: string
 }

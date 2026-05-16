@@ -31,12 +31,12 @@ export const PROJECT_STATUS = {
   ON_HOLD: "on-hold",
 }
 
-// Task statuses
+// Task statuses (match backend enum casing exactly — see Task.status in types.ts).
 export const TASK_STATUS = {
-  PENDING: "pending",
-  IN_PROGRESS: "in-progress",
-  COMPLETED: "completed",
-  OVERDUE: "overdue",
+  PENDING: "Pending",
+  IN_PROGRESS: "In Progress",
+  COMPLETED: "Completed",
+  OVERDUE: "Overdue",
 }
 
 // Priority levels

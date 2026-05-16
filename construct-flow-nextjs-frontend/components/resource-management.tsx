@@ -21,16 +21,14 @@ export function ResourceManagement({
     return "bg-green-500/20 text-green-700 border-green-500/30"
   }
 
-  const utilization = (allocated: number, quantity: number) => {
-    return Math.round((allocated / quantity) * 100)
-  }
+  // Resource.allocationPercentage is already a 0-100 percentage from the backend.
+  const utilization = (allocationPercentage: number) => Math.round(allocationPercentage ?? 0)
+  const allocatedQty = (allocationPercentage: number, quantity: number) =>
+    Math.round(((allocationPercentage ?? 0) / 100) * quantity)
 
   const filteredResources = resources.filter((r) => filterType === "all" || r.category === filterType)
 
-  const lowResources = resources.filter((r) => {
-    const util = utilization(r.allocated, r.quantity)
-    return util > 75
-  })
+  const lowResources = resources.filter((r) => utilization(r.allocationPercentage) > 75)
 
   return (
     <div className="min-h-screen bg-background p-8">
@@ -73,9 +71,9 @@ export function ResourceManagement({
             className="px-4 py-2 border border-border rounded-lg bg-input text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
           >
             <option value="all">All Types</option>
-            <option value="material">Materials</option>
-            <option value="equipment">Equipment</option>
-            <option value="labor">Labor</option>
+            <option value="Material">Materials</option>
+            <option value="Equipment">Equipment</option>
+            <option value="Labor">Labor</option>
           </select>
         </div>
       </div>
@@ -97,7 +95,8 @@ export function ResourceManagement({
             </thead>
             <tbody>
               {filteredResources.map((resource) => {
-                const util = utilization(resource.allocated, resource.quantity)
+                const util = utilization(resource.allocationPercentage)
+                const allocQty = allocatedQty(resource.allocationPercentage, resource.quantity)
                 return (
                   <tr key={resource.id} className="border-b border-border hover:bg-muted/50 transition-colors">
                     <td className="py-4 px-6">
@@ -116,7 +115,7 @@ export function ResourceManagement({
                     </td>
                     <td className="py-4 px-6">
                       <span className="text-foreground">
-                        {resource.allocated} {resource.unit}
+                        {allocQty} {resource.unit}
                       </span>
                     </td>
                     <td className="py-4 px-6">
@@ -158,7 +157,7 @@ export function ResourceManagement({
                   </span>
                 </div>
                 <p className="text-sm text-muted-foreground mb-3">
-                  Utilization at {utilization(resource.allocated, resource.quantity)}% capacity
+                  Utilization at {utilization(resource.allocationPercentage)}% capacity
                 </p>
                 <button
                   onClick={onRequestResource}

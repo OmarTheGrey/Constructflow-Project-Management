@@ -11,12 +11,12 @@ interface ResourceRequestModalProps {
 
 export function ResourceRequestModal({ onClose }: ResourceRequestModalProps) {
   const [formData, setFormData] = useState({
-    resourceType: "material",
+    resourceType: "Material",
     resourceName: "",
     quantity: "",
     priority: "normal",
     justification: "",
-    cost: "", // Added cost state
+    cost: "",
   })
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -37,13 +37,15 @@ export function ResourceRequestModal({ onClose }: ResourceRequestModalProps) {
         name: formData.resourceName,
         category: formData.resourceType,
         quantity: Number(formData.quantity),
-        unit: "units", // Default unit
-        allocated: 0,
-        cost: Number(formData.cost) // Use form cost
+        unit: "units",
+        allocationPercentage: 0,
+        cost: Number(formData.cost),
       })
       onClose()
-    } catch (err) {
-      console.error("Failed to add resource", err)
+    } catch (err: any) {
+      const msg = err?.response?.data?.message ?? "Failed to add resource"
+      alert(msg)
+      console.error("Failed to add resource:", err)
     }
   }
 
@@ -61,9 +63,9 @@ export function ResourceRequestModal({ onClose }: ResourceRequestModalProps) {
               onChange={handleChange}
               className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
             >
-              <option value="material">Material</option>
-              <option value="equipment">Equipment</option>
-              <option value="labor">Labor</option>
+              <option value="Material">Material</option>
+              <option value="Equipment">Equipment</option>
+              <option value="Labor">Labor</option>
             </select>
           </div>
 

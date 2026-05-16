@@ -14,14 +14,15 @@ interface TaskCreateModalProps {
 export function TaskCreateModal({ onClose, taskId }: TaskCreateModalProps) {
   /* eslint-disable react-hooks/exhaustive-deps */
   const { addTask, updateTask, projects, tasks, resources, allocateResource } = useApp()
+  // Status and priority values use exact backend casing - no transforms on submit.
   const [formData, setFormData] = useState({
     projectId: projects[0]?.id || "",
     title: "",
     description: "",
     assignee: "",
     dueDate: "",
-    priority: "medium" as const,
-    status: "pending" as const,
+    priority: "Medium" as "Low" | "Medium" | "High" | "Critical",
+    status: "Pending" as "Pending" | "In Progress" | "Completed",
   })
 
   // Allocation State
@@ -41,7 +42,8 @@ export function TaskCreateModal({ onClose, taskId }: TaskCreateModalProps) {
     setAllocations(newAlloc)
   }
 
-  // Load existing task data if editing
+  // Load existing task data if editing. Backend stores status/priority in
+  // title case ("Pending", "In Progress", "Low", ...); use them as-is.
   useEffect(() => {
     if (taskId) {
       const task = tasks.find((t) => t.id === taskId)
@@ -52,8 +54,8 @@ export function TaskCreateModal({ onClose, taskId }: TaskCreateModalProps) {
           description: task.description,
           assignee: task.assignee,
           dueDate: task.dueDate,
-          priority: (task.priority.toLowerCase() as any) || "medium",
-          status: (task.status.toLowerCase() as any) || "pending",
+          priority: (task.priority as any) || "Medium",
+          status: (task.status as any) || "Pending",
         })
       }
     }
@@ -76,8 +78,8 @@ export function TaskCreateModal({ onClose, taskId }: TaskCreateModalProps) {
       description: formData.description,
       assignee: formData.assignee,
       dueDate: formData.dueDate,
-      priority: formData.priority.charAt(0).toUpperCase() + formData.priority.slice(1) as any,
-      status: formData.status.charAt(0).toUpperCase() + formData.status.slice(1) as any,
+      priority: formData.priority as any,
+      status: formData.status as any,
     }
 
     try {
@@ -214,10 +216,10 @@ export function TaskCreateModal({ onClose, taskId }: TaskCreateModalProps) {
               onChange={handleChange}
               className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
             >
-              <option value="low">Low</option>
-              <option value="medium">Medium</option>
-              <option value="high">High</option>
-              <option value="critical">Critical</option>
+              <option value="Low">Low</option>
+              <option value="Medium">Medium</option>
+              <option value="High">High</option>
+              <option value="Critical">Critical</option>
             </select>
           </div>
 
@@ -229,9 +231,9 @@ export function TaskCreateModal({ onClose, taskId }: TaskCreateModalProps) {
               onChange={handleChange}
               className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
             >
-              <option value="pending">Pending</option>
-              <option value="in progress">In Progress</option>
-              <option value="completed">Completed</option>
+              <option value="Pending">Pending</option>
+              <option value="In Progress">In Progress</option>
+              <option value="Completed">Completed</option>
             </select>
           </div>
         </div>

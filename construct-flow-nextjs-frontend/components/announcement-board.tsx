@@ -21,7 +21,7 @@ export function AnnouncementBoard() {
   const [commentForm, setCommentForm] = useState({ author: "", content: "" })
   const [formData, setFormData] = useState({
     title: "",
-    message: "",
+    content: "",
     priority: "normal" as const,
   })
 
@@ -40,17 +40,23 @@ export function AnnouncementBoard() {
     }
   }
 
-  const handleAddAnnouncement = (e: React.FormEvent) => {
+  const handleAddAnnouncement = async (e: React.FormEvent) => {
     e.preventDefault()
-    const newAnnouncement = {
-      title: formData.title,
-      content: formData.message,
-      priority: formData.priority,
-      author: "Current User"
+    try {
+      await addAnnouncement({
+        title: formData.title,
+        content: formData.content,
+        priority: formData.priority,
+        author: "Current User",
+      })
+      setFormData({ title: "", content: "", priority: "normal" })
+      setShowForm(false)
+    } catch (err: any) {
+      // Surface validation errors from GlobalExceptionHandler instead of swallowing.
+      const msg = err?.response?.data?.message ?? "Failed to post announcement"
+      alert(msg)
+      console.error("addAnnouncement failed:", err)
     }
-    addAnnouncement(newAnnouncement)
-    setFormData({ title: "", message: "", priority: "normal" })
-    setShowForm(false)
   }
 
   const handleToggleExpand = (announcementId: string) => {
@@ -158,8 +164,8 @@ export function AnnouncementBoard() {
             />
             <textarea
               placeholder="Message content"
-              value={formData.message}
-              onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+              value={formData.content}
+              onChange={(e) => setFormData({ ...formData, content: e.target.value })}
               required
               rows={3}
               className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
@@ -226,7 +232,7 @@ export function AnnouncementBoard() {
                     </button>
                   </div>
                 </div>
-                <p className="text-foreground mb-4">{announcement.message || announcement.content}</p>
+                <p className="text-foreground mb-4">{announcement.content}</p>
 
                 {/* Toggle Comments Button */}
                 <button
