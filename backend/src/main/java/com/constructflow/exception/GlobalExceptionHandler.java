@@ -8,6 +8,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
@@ -54,6 +55,18 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
                 .body(new ErrorResponse(HttpStatus.UNPROCESSABLE_ENTITY.value(),
                         ex.getMessage(), LocalDateTime.now(), null));
+    }
+
+    @ExceptionHandler(IOException.class)
+    public ResponseEntity<ErrorResponse> handleIO(IOException ex) {
+        // Checked I/O exceptions reach this handler from controllers that declare
+        // `throws IOException` (e.g. DocumentController.uploadDocument /
+        // exportDocument). Without a dedicated handler, Spring would wrap them in
+        // its default 500 path and the body shape would diverge from the rest of
+        // the API (which always returns ErrorResponse).
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                        "I/O error: " + ex.getMessage(), LocalDateTime.now(), null));
     }
 
     @ExceptionHandler(RuntimeException.class)
