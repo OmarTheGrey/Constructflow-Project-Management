@@ -92,22 +92,11 @@ export const DocumentService = {
     const response = await api.get(`/documents/project/${projectId}`);
     return response.data;
   },
-  // Simulation since proper file upload requires FormData
   uploadDocument: async (formData: FormData) => {
-    // Use a fresh axios call to avoid global instance configuration issues with FormData
-    const response = await axios.post(`${API_BASE_URL}/documents`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data' // Axios auto-detects boundary when data is FormData, but explicit setting can be tricky. Best is to let browser do it by NOT setting header? 
-        // Actually, for raw axios.post with FormData, it's often best to let it be. But let's try explicit undefined.
-      },
-    });
-    // Wait, axios automatically sets Content-Type to multipart/form-data with boundary if you pass FormData.
-    // Explicitly setting 'Content-Type': 'multipart/form-data' removes boundary.
-    // Explicitly setting undefined works.
-    // Or just NOT passing headers at all.
-    // Let's rely on axios defaults for a fresh instance.
-    const response2 = await axios.post(`${API_BASE_URL}/documents`, formData);
-    return response2.data;
+    // Bypass the shared `api` instance whose default Content-Type is application/json.
+    // Letting axios omit the header makes the browser set multipart/form-data
+    // with the correct boundary automatically.
+    const response = await axios.post(`${API_BASE_URL}/documents`, formData);
     return response.data;
   },
   deleteDocument: async (id: string) => {
