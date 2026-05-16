@@ -36,5 +36,7 @@ public class Task extends BaseEntity {
     private BigDecimal actualCost;
 
     @ElementCollection
+    @CollectionTable(name = "task_dependencies", joinColumns = @JoinColumn(name = "task_id"))
+    @Column(name = "dependency_name")
     private java.util.List<String> dependencies;
 }
