@@ -29,10 +29,16 @@ public class GlobalReportService {
 
         ExecutiveSummaryDTO summary = new ExecutiveSummaryDTO();
 
+        // Materialise the project snapshot once so both passes (project metrics
+        // and tasks-per-project) operate on the same set. Otherwise the two
+        // ProjectScanner iterations could disagree under concurrent writes.
+        List<Project> projects = new ArrayList<>();
+        projectScanner.forEach(projects::add);
+
         long totalProjects = 0, activeProjects = 0;
         double totalBudget = 0.0, totalActualCost = 0.0;
 
-        for (Project p : projectScanner) {
+        for (Project p : projects) {
             totalProjects++;
             if (activeStatus.equalsIgnoreCase(p.getStatus())
                     || inProgressStatus.equalsIgnoreCase(p.getStatus())) {
@@ -51,7 +57,7 @@ public class GlobalReportService {
         List<Task> recentCandidates = new ArrayList<>();
 
         ProjectTaskTreeIterator taskIterator = new ProjectTaskTreeIterator(
-                projectScanner.iterator(), taskRepository);
+                projects.iterator(), taskRepository);
 
         while (taskIterator.hasNext()) {
             Task t = taskIterator.next();

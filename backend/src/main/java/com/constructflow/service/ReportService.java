@@ -52,9 +52,15 @@ public class ReportService {
     private ReportContext buildContext() {
         ReportContext ctx = new ReportContext();
 
+        // Materialise the project snapshot once so both passes (project metrics
+        // and tasks-per-project) operate on the same set. Otherwise the two
+        // ProjectScanner iterations could disagree under concurrent writes.
+        List<Project> projects = new ArrayList<>();
+        projectScanner.forEach(projects::add);
+
         long totalProjects = 0, activeProjects = 0;
         double totalBudget = 0.0, totalActualCost = 0.0;
-        for (Project p : projectScanner) {
+        for (Project p : projects) {
             totalProjects++;
             if ("Active".equalsIgnoreCase(p.getStatus()) || "In Progress".equalsIgnoreCase(p.getStatus())) activeProjects++;
             if (p.getBudget() != null)     totalBudget     += p.getBudget().doubleValue();
@@ -63,7 +69,7 @@ public class ReportService {
 
         long completedTasks = 0, pendingTasks = 0, overdueTasks = 0;
         List<Task> allTasks = new ArrayList<>();
-        ProjectTaskTreeIterator taskIter = new ProjectTaskTreeIterator(projectScanner.iterator(), taskRepository);
+        ProjectTaskTreeIterator taskIter = new ProjectTaskTreeIterator(projects.iterator(), taskRepository);
         while (taskIter.hasNext()) {
             Task t = taskIter.next();
             allTasks.add(t);
