@@ -70,16 +70,19 @@ export function ProjectCreateModal({ onClose, projectId }: ProjectCreateModalPro
       if (projectId) {
         await updateProject(projectId, projectData)
       } else {
+        // No client-side id: the backend assigns a UUID and addProject returns
+        // the created entity, which refreshData() then makes visible.
         await addProject({
           ...projectData,
-          id: `proj-${Date.now()}`,
           progress: 0,
           milestones: [],
-        } as Project)
+        })
       }
       onClose()
-    } catch (error) {
-      console.error('Error saving project:', error)
+    } catch (err: any) {
+      const msg = err?.response?.data?.message ?? 'Failed to save project'
+      alert(msg)
+      console.error('Error saving project:', err)
     }
   }
 

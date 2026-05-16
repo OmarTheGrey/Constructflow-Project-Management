@@ -83,43 +83,21 @@ export function TaskCreateModal({ onClose, taskId }: TaskCreateModalProps) {
     }
 
     try {
-      let activeTaskId = taskId;
+      let activeTaskId: string | undefined = taskId
 
       if (taskId) {
-        // Update existing task
         await updateTask(taskId, taskData)
       } else {
-        // Create new task
-        // Ideally addTask should return the new ID, but context void return prevents that.
-        // For now, we will assume we can generate a client ID or we won't allocate for *new* tasks in this flow 
-        // without a real backend ID response update. 
-        // BUT, since we are moving fast, let's use a temporary client ID generation strategy or 
-        // just try to persist allocations if we had a real ID. 
-        // Actually, without the real ID from backend, we can't allocate safely. 
-        // Let's rely on the user to Edit the task to add resources if it's new, OR
-        // assume 'addTask' handles it? No.
-        // Let's generate a temporary ID if we must, or just skip allocation for new tasks due to this limitation 
-        // unless we refactor 'addTask' to return ID.
-        // Refactoring 'addTask' to return ID is the correct move. 
-        // However, skipping that for now to avoid cascading changes.
-        // Let's try to assume a pattern where we might be stuck.
-        // WAIT: The user wants "ability to set certain resources to each task".
-        // It's acceptable if they have to Create then Edit.
-        // BUT better UX is to allow it.
-        // Let's generate a client-side ID if the backend accepts it (it does separate UUID generation though).
-        // Let's just create the task.
-        const newId = `task-${Date.now()}` // Backend might ignore this ID if generated there.
-        await addTask({
+        // addTask now returns the backend-assigned UUID — use it to allocate
+        // resources on the freshly-created task without a follow-up edit.
+        const created = await addTask({
           ...taskData,
-          // id: newId, // If we pass ID, maybe backend uses it? DTO usually ignores ID creation.
           dependencies: [],
-          actualCost: 0
+          actualCost: 0,
         })
-        // If we can't get the ID, we can't allocate.
-        // Let's warn the user or just only enable allocation for "Edit".
+        activeTaskId = created.id
       }
 
-      // Only allocate if we have a taskId (Editing)
       if (activeTaskId && allocations.length > 0) {
         for (const alloc of allocations) {
           await allocateResource(activeTaskId, alloc.resourceId, alloc.quantity)
@@ -127,8 +105,10 @@ export function TaskCreateModal({ onClose, taskId }: TaskCreateModalProps) {
       }
 
       onClose()
-    } catch (err) {
-      console.error("Failed to save task", err)
+    } catch (err: any) {
+      const msg = err?.response?.data?.message ?? "Failed to save task"
+      alert(msg)
+      console.error("Failed to save task:", err)
     }
   }
 
@@ -239,15 +219,14 @@ export function TaskCreateModal({ onClose, taskId }: TaskCreateModalProps) {
         </div>
 
         <div className="border-t pt-4 mt-4">
-          <h3 className="text-sm font-bold mb-2">Resource Allocation (Edit Mode Only)</h3>
+          <h3 className="text-sm font-bold mb-2">Resource Allocation</h3>
           <div className="flex gap-2 mb-2">
             <select
               className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm"
               value={newAllocation.resourceId}
               onChange={e => setNewAllocation({ ...newAllocation, resourceId: e.target.value })}
-              disabled={!taskId}
             >
-              <option value="">{taskId ? "Select Resource" : "Save Task First"}</option>
+              <option value="">Select Resource</option>
               {resources.map(r => (
                 <option key={r.id} value={r.id}>{r.name} ({r.quantity} {r.unit})</option>
               ))}
@@ -258,13 +237,11 @@ export function TaskCreateModal({ onClose, taskId }: TaskCreateModalProps) {
               className="w-20 px-3 py-2 border border-slate-300 rounded-lg text-sm"
               value={newAllocation.quantity}
               onChange={e => setNewAllocation({ ...newAllocation, quantity: e.target.value })}
-              disabled={!taskId}
             />
             <button
               type="button"
               onClick={handleAddAllocation}
               className="px-3 py-2 bg-slate-200 rounded-lg text-sm hover:bg-slate-300"
-              disabled={!taskId}
             >Add</button>
           </div>
 

@@ -13,20 +13,22 @@ interface AppContextType {
   announcements: Announcement[]
   dailyReports: DailyReport[]
   workLogs: WorkLog[]
-  addProject: (project: Partial<Project>) => Promise<void>
-  updateProject: (id: string, project: Partial<Project>) => Promise<void>
+  // Create operations return the backend-assigned entity (with real UUID)
+  // so callers can chain follow-up calls (e.g. allocate-on-create).
+  addProject: (project: Partial<Project>) => Promise<Project>
+  updateProject: (id: string, project: Partial<Project>) => Promise<Project>
   deleteProject: (id: string) => Promise<void>
-  addTask: (task: Partial<Task>) => Promise<void>
-  updateTask: (id: string, task: Partial<Task>) => Promise<void>
+  addTask: (task: Partial<Task>) => Promise<Task>
+  updateTask: (id: string, task: Partial<Task>) => Promise<Task>
   deleteTask: (id: string) => Promise<void>
-  addResource: (resource: Partial<Resource>) => Promise<void>
-  updateResource: (id: string, resource: Partial<Resource>) => Promise<void>
-  addDocument: (document: any) => Promise<void>
+  addResource: (resource: Partial<Resource>) => Promise<Resource>
+  updateResource: (id: string, resource: Partial<Resource>) => Promise<Resource>
+  addDocument: (document: any) => Promise<Document>
   deleteDocument: (id: string) => Promise<void>
-  addAnnouncement: (announcement: Partial<Announcement>) => Promise<void>
+  addAnnouncement: (announcement: Partial<Announcement>) => Promise<Announcement>
   deleteAnnouncement: (id: string) => Promise<void>
-  addDailyReport: (report: Partial<DailyReport>) => Promise<void>
-  addWorkLog: (log: Partial<WorkLog>) => Promise<void>
+  addDailyReport: (report: Partial<DailyReport>) => Promise<DailyReport>
+  addWorkLog: (log: Partial<WorkLog>) => Promise<WorkLog>
   allocateResource: (taskId: string, resourceId: string, quantity: number) => Promise<void>
   updateInventory: (id: string, quantityChange: number, reason: string) => Promise<void>
   refreshData: () => Promise<void>
@@ -65,14 +67,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     refreshData();
   }, []);
 
-  const addProject = async (project: Partial<Project>) => {
-    await ProjectService.createProject(project);
+  const addProject = async (project: Partial<Project>): Promise<Project> => {
+    const created = await ProjectService.createProject(project);
     refreshData();
+    return created;
   }
 
-  const updateProject = async (id: string, project: Partial<Project>) => {
-    await ProjectService.updateProject(id, project);
+  const updateProject = async (id: string, project: Partial<Project>): Promise<Project> => {
+    const updated = await ProjectService.updateProject(id, project);
     refreshData();
+    return updated;
   }
 
   const deleteProject = async (id: string) => {
@@ -80,14 +84,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     refreshData();
   }
 
-  const addTask = async (task: Partial<Task>) => {
-    await TaskService.createTask(task);
+  const addTask = async (task: Partial<Task>): Promise<Task> => {
+    const created = await TaskService.createTask(task);
     refreshData();
+    return created;
   }
 
-  const updateTask = async (id: string, task: Partial<Task>) => {
-    await TaskService.updateTask(id, task);
+  const updateTask = async (id: string, task: Partial<Task>): Promise<Task> => {
+    const updated = await TaskService.updateTask(id, task);
     refreshData();
+    return updated;
   }
 
   const deleteTask = async (id: string) => {
@@ -95,28 +101,35 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     refreshData();
   }
 
-  const addResource = async (resource: Partial<Resource>) => {
-    await ResourceService.createResource(resource);
+  const addResource = async (resource: Partial<Resource>): Promise<Resource> => {
+    const created = await ResourceService.createResource(resource);
     refreshData();
+    return created;
   }
 
-  const updateResource = async (id: string, resource: Partial<Resource>) => {
-    await ResourceService.updateResource(id, resource);
+  const updateResource = async (id: string, resource: Partial<Resource>): Promise<Resource> => {
+    const updated = await ResourceService.updateResource(id, resource);
     refreshData();
+    return updated;
   }
 
-  const addDocument = async (formData: FormData) => {
-    await DocumentService.uploadDocument(formData);
-    // Refresh documents handled via refreshData or local state update if implemented
+  const addDocument = async (formData: FormData): Promise<Document> => {
+    const created = await DocumentService.uploadDocument(formData);
+    // Stash the freshly-uploaded record locally so the UI can show it without
+    // a global refresh (the backend has no global "list all documents" endpoint).
+    setDocuments(prev => [...prev, created]);
+    return created;
   }
 
   const deleteDocument = async (id: string) => {
     await DocumentService.deleteDocument(id);
+    setDocuments(prev => prev.filter(d => d.id !== id));
   }
 
-  const addAnnouncement = async (announcement: Partial<Announcement>) => {
-    await AnnouncementService.createAnnouncement(announcement);
+  const addAnnouncement = async (announcement: Partial<Announcement>): Promise<Announcement> => {
+    const created = await AnnouncementService.createAnnouncement(announcement);
     refreshData();
+    return created;
   }
 
   const deleteAnnouncement = async (id: string) => {
@@ -124,12 +137,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     refreshData();
   }
 
-  const addDailyReport = async (report: Partial<DailyReport>) => {
-    await ReportService.createDailyReport(report);
+  const addDailyReport = async (report: Partial<DailyReport>): Promise<DailyReport> => {
+    return await ReportService.createDailyReport(report);
   }
 
-  const addWorkLog = async (log: Partial<WorkLog>) => {
-    await ReportService.createWorkLog(log);
+  const addWorkLog = async (log: Partial<WorkLog>): Promise<WorkLog> => {
+    return await ReportService.createWorkLog(log);
   }
 
   const allocateResource = async (taskId: string, resourceId: string, quantity: number) => {
