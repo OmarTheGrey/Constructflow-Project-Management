@@ -64,6 +64,11 @@ public class AnnouncementRoom implements DiscussionRoomMediator {
         comment.setContent(dto.getContent());
         AnnouncementComment saved = commentRepository.save(comment);
 
+        // Force the LAZY announcement proxy to initialise while the session is still
+        // open, so participants (current and future @Async) can safely call
+        // saved.getAnnouncement().getId() without a LazyInitializationException.
+        saved.getAnnouncement().getId();
+
         for (Participant p : defaultParticipants) {
             safeDispatch(p, saved);
         }
