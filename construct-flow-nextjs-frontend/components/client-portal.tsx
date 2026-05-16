@@ -4,7 +4,9 @@ import { useApp } from "@/lib/app-context"
 import { ChevronRight, FileText, ImageIcon, TrendingUp } from "lucide-react"
 
 export function ClientPortal() {
-  const { projects, getProjectDocuments } = useApp()
+  const { projects, documents } = useApp()
+  const getProjectDocuments = (projectId: string) =>
+    documents.filter((d) => d.projectId === projectId)
 
   return (
     <div className="min-h-screen bg-background p-8">

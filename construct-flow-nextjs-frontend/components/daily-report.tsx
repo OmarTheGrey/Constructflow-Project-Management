@@ -42,31 +42,33 @@ export function DailyReport() {
     }
   }, [reportForm.date, tasks, resources, projects])
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    const newReport = {
-      id: `dr-${Date.now()}`,
-      projectId: reportForm.projectId,
-      taskId: reportForm.taskId,
-      date: reportForm.date,
-      activities: reportForm.activities,
-      issues: reportForm.issues,
-      completionPercentage: reportForm.completionPercentage,
-      photos: [],
-      submittedBy: "Current User",
-      changes: dailyChanges, // Include tracked changes
+    // Backend assigns the id; only the fields backend DailyReportRequestDTO
+    // recognises are sent (extras would be dropped by Jackson anyway).
+    try {
+      await addDailyReport({
+        projectId: reportForm.projectId,
+        activities: reportForm.activities,
+        issues: reportForm.issues,
+        completionPercentage: reportForm.completionPercentage,
+        photos: [],
+        submittedBy: "Current User",
+      })
+      setReportForm({
+        date: "",
+        projectId: projects[0]?.id || "",
+        taskId: "",
+        activities: "",
+        issues: "",
+        completionPercentage: 50,
+      })
+    } catch (err: any) {
+      const msg = err?.response?.data?.message ?? "Failed to submit daily report"
+      alert(msg)
+      console.error("addDailyReport failed:", err)
     }
-
-    addDailyReport(newReport)
-    setReportForm({
-      date: "",
-      projectId: projects[0]?.id || "",
-      taskId: "",
-      activities: "",
-      issues: "",
-      completionPercentage: 50,
-    })
   }
 
   return (

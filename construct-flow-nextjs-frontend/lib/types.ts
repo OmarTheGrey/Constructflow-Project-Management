@@ -29,6 +29,7 @@ export interface Task {
   actualCost: number
   dependencies: string[]
   createdAt?: string
+  lastModifiedAt?: string
 }
 
 export interface Resource {
@@ -42,6 +43,7 @@ export interface Resource {
   cost: number
   projectId?: string
   createdAt?: string
+  lastModifiedAt?: string
 }
 
 export interface Document {

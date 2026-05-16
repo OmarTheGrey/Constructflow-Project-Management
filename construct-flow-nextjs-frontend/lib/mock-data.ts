@@ -9,6 +9,7 @@ export const mockProjects: Project[] = [
     startDate: "2024-01-15",
     endDate: "2024-08-30",
     budget: 2500000,
+    actualCost: 0,
     status: "Active",
     progress: 65,
     objectives: "Construct a modern 15-story office building with green spaces",
@@ -22,6 +23,7 @@ export const mockProjects: Project[] = [
     startDate: "2024-02-01",
     endDate: "2024-10-15",
     budget: 3200000,
+    actualCost: 0,
     status: "Active",
     progress: 45,
     objectives: "Develop 24-unit residential complex",
@@ -35,6 +37,7 @@ export const mockProjects: Project[] = [
     startDate: "2024-03-10",
     endDate: "2024-07-20",
     budget: 1800000,
+    actualCost: 0,
     status: "Draft",
     progress: 0,
     objectives: "Repair and reinforcement of existing bridge structure",
@@ -220,13 +223,12 @@ export const mockDailyReports: DailyReport[] = [
   {
     id: "dr-001",
     projectId: "proj-001",
-    taskId: "task-002",
-    date: "2024-01-13",
     activities: "Continued steel frame installation on levels 3-4. Achieved 80% completion for the day.",
     issues: "Minor delay due to crane maintenance - 2 hours. Resolved by afternoon.",
     completionPercentage: 75,
     photos: [],
     submittedBy: "Mike Johnson",
+    createdAt: "2024-01-13T18:00:00",
   },
 ]
 
@@ -238,6 +240,7 @@ export const mockWorkLogs: WorkLog[] = [
     hours: 8,
     notes: "Steel frame installation progressing well",
     submittedBy: "Mike Johnson",
+    createdAt: "2024-01-13T17:00:00",
   },
   {
     id: "wl-002",
@@ -246,5 +249,6 @@ export const mockWorkLogs: WorkLog[] = [
     hours: 6,
     notes: "Site prep for electrical installation",
     submittedBy: "Sarah Lee",
+    createdAt: "2024-01-12T17:00:00",
   },
 ]
