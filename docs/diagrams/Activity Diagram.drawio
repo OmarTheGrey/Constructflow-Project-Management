@@ -1,0 +1,142 @@
+<mxfile host="app.diagrams.net">
+  <diagram id="Allocation-Flow" name="Activity Diagram">
+    <mxGraphModel dx="1491" dy="753" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1400" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="start" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#000000;" value="" vertex="1">
+          <mxGeometry height="30" width="30" x="385" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="step1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;" value="User clicks &quot;Allocate Resource&quot;" vertex="1">
+          <mxGeometry height="50" width="160" x="320" y="100" as="geometry" />
+        </mxCell>
+        <mxCell id="step2" parent="1" style="rounded=1;whiteSpace=wrap;html=1;" value="System receives&#xa;AllocationCommand" vertex="1">
+          <mxGeometry height="50" width="160" x="320" y="180" as="geometry" />
+        </mxCell>
+        <mxCell id="step3" parent="1" style="rounded=1;whiteSpace=wrap;html=1;" value="Validate basic inputs&#xa;(Task ID, Resource ID)" vertex="1">
+          <mxGeometry height="50" width="160" x="320" y="260" as="geometry" />
+        </mxCell>
+        <mxCell id="dec1" parent="1" style="rhombus;whiteSpace=wrap;html=1;" value="Inputs Valid?" vertex="1">
+          <mxGeometry height="80" width="100" x="350" y="340" as="geometry" />
+        </mxCell>
+        <mxCell id="err1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" value="Throw&#xa;ValidationException" vertex="1">
+          <mxGeometry height="50" width="140" x="540" y="355" as="geometry" />
+        </mxCell>
+        <mxCell id="step4" parent="1" style="rounded=1;whiteSpace=wrap;html=1;" value="Check current&#xa;inventory levels" vertex="1">
+          <mxGeometry height="50" width="160" x="320" y="460" as="geometry" />
+        </mxCell>
+        <mxCell id="dec2" parent="1" style="rhombus;whiteSpace=wrap;html=1;" value="Stock Available?" vertex="1">
+          <mxGeometry height="80" width="120" x="340" y="540" as="geometry" />
+        </mxCell>
+        <mxCell id="err2" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" value="Throw&#xa;InsufficientResourceException" vertex="1">
+          <mxGeometry height="50" width="180" x="540" y="555" as="geometry" />
+        </mxCell>
+        <mxCell id="step5" parent="1" style="rounded=1;whiteSpace=wrap;html=1;" value="Apply category rules&#xa;(Material/Equipment/Labor)" vertex="1">
+          <mxGeometry height="50" width="160" x="320" y="660" as="geometry" />
+        </mxCell>
+        <mxCell id="dec3" parent="1" style="rhombus;whiteSpace=wrap;html=1;" value="Rules Passed?" vertex="1">
+          <mxGeometry height="80" width="100" x="350" y="740" as="geometry" />
+        </mxCell>
+        <mxCell id="err3" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" value="Throw&#xa;DomainValidationException" vertex="1">
+          <mxGeometry height="50" width="160" x="540" y="755" as="geometry" />
+        </mxCell>
+        <mxCell id="success1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;" value="Deduct quantity from Resource" vertex="1">
+          <mxGeometry height="40" width="180" x="310" y="860" as="geometry" />
+        </mxCell>
+        <mxCell id="success2" parent="1" style="rounded=1;whiteSpace=wrap;html=1;" value="Save TaskAllocation record to DB" vertex="1">
+          <mxGeometry height="40" width="180" x="310" y="920" as="geometry" />
+        </mxCell>
+        <mxCell id="success3" parent="1" style="rounded=1;whiteSpace=wrap;html=1;" value="Publish Activity to Global Hub" vertex="1">
+          <mxGeometry height="40" width="180" x="310" y="980" as="geometry" />
+        </mxCell>
+        <mxCell id="success4" parent="1" style="rounded=1;whiteSpace=wrap;html=1;" value="Write to Audit Log" vertex="1">
+          <mxGeometry height="40" width="180" x="310" y="1040" as="geometry" />
+        </mxCell>
+        <mxCell id="success5" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" value="Return Success Response" vertex="1">
+          <mxGeometry height="40" width="180" x="310" y="1100" as="geometry" />
+        </mxCell>
+        <mxCell id="stop" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#000000;strokeColor=#000000;strokeWidth=3;" value="" vertex="1">
+          <mxGeometry height="30" width="30" x="385" y="1180" as="geometry" />
+        </mxCell>
+        <mxCell id="e1" edge="1" parent="1" source="start" target="step1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e2" edge="1" parent="1" source="step1" target="step2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e3" edge="1" parent="1" source="step2" target="step3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e4" edge="1" parent="1" source="step3" target="dec1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e5" edge="1" parent="1" source="dec1" target="step4" value="yes">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e6" edge="1" parent="1" source="dec1" target="err1" value="no">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e7" edge="1" parent="1" source="step4" target="dec2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e8" edge="1" parent="1" source="dec2" target="step5" value="yes">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e9" edge="1" parent="1" source="dec2" target="err2" value="no">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e10" edge="1" parent="1" source="step5" target="dec3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e11" edge="1" parent="1" source="dec3" target="success1" value="yes">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e12" edge="1" parent="1" source="dec3" target="err3" value="no">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e13" edge="1" parent="1" source="success1" target="success2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e14" edge="1" parent="1" source="success2" target="success3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e15" edge="1" parent="1" source="success3" target="success4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e16" edge="1" parent="1" source="success4" target="success5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e17" edge="1" parent="1" source="success5" target="stop">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e18" edge="1" parent="1" source="err1" target="stop">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="780" y="380" />
+              <mxPoint x="780" y="1195" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e19" edge="1" parent="1" source="err2" target="stop">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="760" y="580" />
+              <mxPoint x="760" y="920" />
+              <mxPoint x="760" y="1180" />
+              <mxPoint x="590" y="1180" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e20" edge="1" parent="1" source="err3" target="stop">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="740" y="780" />
+              <mxPoint x="740" y="1160" />
+              <mxPoint x="580" y="1170" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

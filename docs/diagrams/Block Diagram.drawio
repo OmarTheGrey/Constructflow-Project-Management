@@ -1,0 +1,70 @@
+<mxfile host="app.diagrams.net">
+  <diagram id="Multi-Tier-Arch" name="System Architecture">
+    <mxGraphModel dx="1044" dy="527" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="node_client" parent="1" style="verticalAlign=top;align=center;spacingTop=8;fillColor=#f5f5f5;strokeColor=#666666;shape=cube;size=10;direction=south;fontStyle=1;html=1;whiteSpace=wrap;" value="Client Tier" vertex="1">
+          <mxGeometry height="420" width="200" x="40" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="comp_ui" parent="node_client" style="shape=component;align=left;spacingLeft=36;html=1;whiteSpace=wrap;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="Web Browser (Next.js UI)" vertex="1">
+          <mxGeometry height="60" width="160" x="20" y="180" as="geometry" />
+        </mxCell>
+        <mxCell id="node_backend" parent="1" style="verticalAlign=top;align=center;spacingTop=8;fillColor=#f5f5f5;strokeColor=#666666;shape=cube;size=10;direction=south;fontStyle=1;html=1;whiteSpace=wrap;" value="Backend Server (Spring Boot)" vertex="1">
+          <mxGeometry height="420" width="400" x="360" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="comp_api" parent="node_backend" style="shape=component;align=left;spacingLeft=36;html=1;whiteSpace=wrap;fillColor=#d5e8d4;strokeColor=#82b366;" value="API Gateway / Security" vertex="1">
+          <mxGeometry height="50" width="200" x="100" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="pkg_core" parent="node_backend" style="shape=folder;fontStyle=1;spacingTop=10;tabWidth=140;tabHeight=40;tabPosition=left;html=1;whiteSpace=wrap;fillColor=#ffffff;strokeColor=#666666;container=0;" value="" vertex="1">
+          <mxGeometry height="190" width="320" x="40" y="130" as="geometry" />
+        </mxCell>
+        <mxCell id="comp_dal" parent="node_backend" style="shape=component;align=left;spacingLeft=36;html=1;whiteSpace=wrap;fillColor=#d5e8d4;strokeColor=#82b366;" value="Data Access Layer (JPA)" vertex="1">
+          <mxGeometry height="50" width="200" x="100" y="350" as="geometry" />
+        </mxCell>
+        <mxCell id="edge2" edge="1" parent="node_backend" source="comp_api" target="comp_pm">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge3" edge="1" parent="node_backend" source="comp_api" target="comp_ra">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge4" edge="1" parent="node_backend" source="comp_api" target="comp_rep">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge5" edge="1" parent="node_backend" source="comp_pm" target="comp_dal">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge6" edge="1" parent="node_backend" source="comp_ra" target="comp_dal">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge7" edge="1" parent="node_backend" source="comp_rep" target="comp_dal">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="comp_pm" parent="node_backend" style="shape=component;align=left;spacingLeft=36;html=1;whiteSpace=wrap;fillColor=#d5e8d4;strokeColor=#82b366;" value="Project Management" vertex="1">
+          <mxGeometry height="35" width="180" x="110" y="180" as="geometry" />
+        </mxCell>
+        <mxCell id="comp_ra" parent="node_backend" style="shape=component;align=left;spacingLeft=36;html=1;whiteSpace=wrap;fillColor=#d5e8d4;strokeColor=#82b366;" value="Resource Allocation" vertex="1">
+          <mxGeometry height="35" width="180" x="110" y="225" as="geometry" />
+        </mxCell>
+        <mxCell id="comp_rep" parent="node_backend" style="shape=component;align=left;spacingLeft=36;html=1;whiteSpace=wrap;fillColor=#d5e8d4;strokeColor=#82b366;" value="Reporting &amp; Analytics" vertex="1">
+          <mxGeometry height="35" width="180" x="110" y="270" as="geometry" />
+        </mxCell>
+        <mxCell id="dPFBw8FYjyy0z6otgMVy-1" parent="node_backend" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="&lt;span style=&quot;font-weight: 700;&quot;&gt;Core Business Subsystems&lt;/span&gt;" vertex="1">
+          <mxGeometry height="30" width="120" x="50" y="140" as="geometry" />
+        </mxCell>
+        <mxCell id="node_data" parent="1" style="verticalAlign=top;align=center;spacingTop=8;fillColor=#f5f5f5;strokeColor=#666666;shape=cube;size=10;direction=south;fontStyle=1;html=1;whiteSpace=wrap;" value="Data Tier" vertex="1">
+          <mxGeometry height="420" width="200" x="880" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="comp_db" parent="node_data" style="shape=datastore;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" value="MS SQL Server DB" vertex="1">
+          <mxGeometry height="80" width="140" x="30" y="170" as="geometry" />
+        </mxCell>
+        <mxCell id="edge1" edge="1" parent="1" source="comp_ui" style="endArrow=classic;startArrow=classic;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;edgeStyle=orthogonalEdgeStyle;" target="comp_api" value="HTTP / REST">
+          <mxGeometry height="50" relative="1" width="50" as="geometry" />
+        </mxCell>
+        <mxCell id="edge8" edge="1" parent="1" source="comp_dal" style="endArrow=classic;startArrow=classic;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" target="comp_db" value="JDBC / TCP">
+          <mxGeometry height="50" relative="1" width="50" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

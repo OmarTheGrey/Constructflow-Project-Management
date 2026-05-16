@@ -1,0 +1,52 @@
+<mxfile host="app.diagrams.net">
+  <diagram id="WIS-Arch" name="Page-1">
+    <mxGraphModel dx="1160" dy="586" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="2" parent="1" style="swimlane;whiteSpace=wrap;html=1;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;rounded=0;fontSize=14;fontStyle=1" value="WIS Reference Architecture: ConstructFlow Mapping" vertex="1">
+          <mxGeometry height="580" width="480" x="120" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="t1" parent="2" style="swimlane;whiteSpace=wrap;html=1;startSize=23;" value="Tier 1: Presentation Layer" vertex="1">
+          <mxGeometry height="120" width="440" x="20" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="t1_c1" parent="t1" style="rounded=0;whiteSpace=wrap;html=1;" value="Next.js React UI" vertex="1">
+          <mxGeometry height="50" width="160" x="20" y="45" as="geometry" />
+        </mxCell>
+        <mxCell id="t1_n1" parent="t1" style="shape=note;whiteSpace=wrap;html=1;size=15;spacingLeft=10;align=left;fillColor=#fff2cc;strokeColor=#d6b656;" value="Handles user input &amp; display" vertex="1">
+          <mxGeometry height="60" width="180" x="240" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="t2" parent="2" style="swimlane;whiteSpace=wrap;html=1;startSize=23;" value="Tier 2: Application / Business Logic Layer" vertex="1">
+          <mxGeometry height="160" width="440" x="20" y="220" as="geometry" />
+        </mxCell>
+        <mxCell id="t2_c1" parent="t2" style="rounded=0;whiteSpace=wrap;html=1;" value="Spring Boot REST API" vertex="1">
+          <mxGeometry height="40" width="200" x="20" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="t2_c2" parent="t2" style="rounded=0;whiteSpace=wrap;html=1;" value="Services &amp; Strategy/Mediator Patterns" vertex="1">
+          <mxGeometry height="40" width="200" x="20" y="100" as="geometry" />
+        </mxCell>
+        <mxCell id="t2_n1" parent="t2" style="shape=note;whiteSpace=wrap;html=1;size=15;spacingLeft=10;align=left;fillColor=#fff2cc;strokeColor=#d6b656;" value="Enforces construction business rules" vertex="1">
+          <mxGeometry height="60" width="180" x="240" y="55" as="geometry" />
+        </mxCell>
+        <mxCell id="t3" parent="2" style="swimlane;whiteSpace=wrap;html=1;startSize=23;" value="Tier 3: Data Persistence Layer" vertex="1">
+          <mxGeometry height="130" width="440" x="20" y="430" as="geometry" />
+        </mxCell>
+        <mxCell id="t3_c1" parent="t3" style="rounded=0;whiteSpace=wrap;html=1;" value="Hibernate ORM" vertex="1">
+          <mxGeometry height="30" width="160" x="20" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="t3_c2" parent="t3" style="shape=datastore;whiteSpace=wrap;html=1;" value="MS SQL Server" vertex="1">
+          <mxGeometry height="40" width="160" x="20" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="t3_n1" parent="t3" style="shape=note;whiteSpace=wrap;html=1;size=15;spacingLeft=10;align=left;fillColor=#fff2cc;strokeColor=#d6b656;" value="ACID compliant data storage" vertex="1">
+          <mxGeometry height="60" width="180" x="240" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="edge1" edge="1" parent="2" source="t1" style="endArrow=classic;startArrow=classic;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="t2" value="HTTP/JSON Requests">
+          <mxGeometry height="50" relative="1" width="50" as="geometry" />
+        </mxCell>
+        <mxCell id="edge2" edge="1" parent="2" source="t2" style="endArrow=classic;startArrow=classic;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="t3" value="Database Queries">
+          <mxGeometry height="50" relative="1" width="50" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

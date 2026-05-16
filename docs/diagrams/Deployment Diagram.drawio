@@ -1,0 +1,47 @@
+<mxfile host="app.diagrams.net">
+  <diagram id="ConstructFlow-Deployment" name="Deployment Diagram">
+    <mxGraphModel dx="1030" dy="527" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="node1" parent="1" style="verticalAlign=top;align=center;spacingTop=8;fillColor=#f5f5f5;strokeColor=#666666;shape=cube;size=10;direction=south;fontStyle=0;html=1;whiteSpace=wrap;" value="&lt;b&gt;User Device (Laptop/Tablet)&lt;/b&gt;&#xa;«Client Node»" vertex="1">
+          <mxGeometry height="200" width="220" x="40" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="node1_inner" parent="node1" style="verticalAlign=top;align=center;spacingTop=8;fillColor=#ffffff;strokeColor=#666666;shape=cube;size=10;direction=south;html=1;whiteSpace=wrap;" value="Web Browser" vertex="1">
+          <mxGeometry height="110" width="170" x="25" y="60" as="geometry" />
+        </mxCell>
+        <mxCell id="art1" parent="node1_inner" style="shape=module;align=left;spacingLeft=20;align=center;verticalAlign=middle;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="Compiled Next.js&#xa;HTML/JS" vertex="1">
+          <mxGeometry height="50" width="120" x="25" y="45" as="geometry" />
+        </mxCell>
+        <mxCell id="node2" parent="1" style="verticalAlign=top;align=center;spacingTop=8;fillColor=#f5f5f5;strokeColor=#666666;shape=cube;size=10;direction=south;html=1;whiteSpace=wrap;" value="&lt;b&gt;Application Server Node&lt;/b&gt;&#xa;«Ubuntu/Linux»" vertex="1">
+          <mxGeometry height="200" width="220" x="340" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="node2_inner" parent="node2" style="verticalAlign=top;align=center;spacingTop=8;fillColor=#ffffff;strokeColor=#666666;shape=cube;size=10;direction=south;html=1;whiteSpace=wrap;" value="SpringBoot Embedded Webserver" vertex="1">
+          <mxGeometry height="110" width="170" x="25" y="60" as="geometry" />
+        </mxCell>
+        <mxCell id="art2" parent="node2_inner" style="shape=module;align=left;spacingLeft=20;align=center;verticalAlign=middle;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" value="constructflow-&#xa;backend.jar" vertex="1">
+          <mxGeometry height="50" width="120" x="25" y="45" as="geometry" />
+        </mxCell>
+        <mxCell id="node3" parent="1" style="verticalAlign=top;align=center;spacingTop=8;fillColor=#f5f5f5;strokeColor=#666666;shape=cube;size=10;direction=south;html=1;whiteSpace=wrap;" value="&lt;b&gt;Database Server Node&lt;/b&gt;&#xa;«Windows Server»" vertex="1">
+          <mxGeometry height="200" width="220" x="640" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="db_engine" parent="node3" style="shape=datastore;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;verticalAlign=top;spacingTop=25;" value="MS SQL Server 2019+" vertex="1">
+          <mxGeometry height="120" width="150" x="35" y="60" as="geometry" />
+        </mxCell>
+        <mxCell id="art3" parent="db_engine" style="shape=module;align=left;spacingLeft=20;align=center;verticalAlign=middle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#b85450;" value="ConstructFlowDB" vertex="1">
+          <mxGeometry height="40" width="120" x="15" y="60" as="geometry" />
+        </mxCell>
+        <mxCell id="edge1" edge="1" parent="1" source="node1" style="endArrow=none;html=1;edgeStyle=orthogonalEdgeStyle;startArrow=oval;startFill=0;endArrow=block;endFill=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="node2" value="HTTPS&#xa;(Port 443)">
+          <mxGeometry relative="1" y="20" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge2" edge="1" parent="1" source="node2" style="endArrow=none;html=1;edgeStyle=orthogonalEdgeStyle;startArrow=oval;startFill=0;endArrow=block;endFill=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="node3" value="TCP/IP&#xa;(Port 1433)">
+          <mxGeometry relative="1" y="20" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
