@@ -1,0 +1,209 @@
+{
+  "info": {
+    "_postman_id": "5e1f0002-0000-0000-0000-000000000001",
+    "name": "ConstructFlow Deliverable #5",
+    "description": "Postman collection covering the REST and composite endpoints exercised in the Deliverable #5 technical report.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Project Service",
+      "item": [
+        {
+          "name": "GET all projects (paged)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/projects?page=0&size=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "projects"],
+              "query": [
+                { "key": "page", "value": "0" },
+                { "key": "size", "value": "10" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET project by id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/projects/{{projectId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "projects", "{{projectId}}"]
+            }
+          }
+        },
+        {
+          "name": "POST create project",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  pm.environment.set('projectId', pm.response.json().id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"New Tower Construction\",\n  \"client\": \"Acme Holdings\",\n  \"location\": \"Cairo, Egypt\",\n  \"budget\": 5000000,\n  \"startDate\": \"2026-06-01\",\n  \"endDate\": \"2027-06-01\",\n  \"status\": \"Active\",\n  \"objectives\": \"Deliver 12-floor commercial tower\",\n  \"milestones\": [\"Site prep\", \"Foundation\", \"Structure\", \"Handover\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/projects",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "projects"]
+            }
+          }
+        },
+        {
+          "name": "PUT update project",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"New Tower Construction (Phase II)\",\n  \"client\": \"Acme Holdings\",\n  \"location\": \"Cairo, Egypt\",\n  \"budget\": 5500000,\n  \"startDate\": \"2026-06-01\",\n  \"endDate\": \"2027-09-01\",\n  \"status\": \"Active\",\n  \"objectives\": \"Extended scope: include rooftop solar.\",\n  \"milestones\": [\"Site prep\", \"Foundation\", \"Structure\", \"Solar\", \"Handover\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/projects/{{projectId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "projects", "{{projectId}}"]
+            }
+          }
+        },
+        {
+          "name": "DELETE project",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/projects/{{projectId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "projects", "{{projectId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Resource Service",
+      "item": [
+        {
+          "name": "GET all resources (paged)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/resources?page=0&size=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "resources"],
+              "query": [
+                { "key": "page", "value": "0" },
+                { "key": "size", "value": "10" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST create resource",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  pm.environment.set('resourceId', pm.response.json().id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Steel Rebar 16mm\",\n  \"category\": \"Material\",\n  \"quantity\": 5000,\n  \"unit\": \"kg\",\n  \"allocationPercentage\": 0,\n  \"cost\": 2.5\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/resources",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "resources"]
+            }
+          }
+        },
+        {
+          "name": "PUT update resource",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Steel Rebar 16mm\",\n  \"category\": \"Material\",\n  \"quantity\": 7500,\n  \"unit\": \"kg\",\n  \"allocationPercentage\": 0,\n  \"cost\": 2.8\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/resources/{{resourceId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "resources", "{{resourceId}}"]
+            }
+          }
+        },
+        {
+          "name": "DELETE resource",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/resources/{{resourceId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "resources", "{{resourceId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Composite Service",
+      "item": [
+        {
+          "name": "POST /api/compositions/project-kickoff",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"project\": {\n    \"name\": \"Greenfield Warehouse\",\n    \"client\": \"Globex Logistics\",\n    \"location\": \"Alexandria, Egypt\",\n    \"budget\": 1200000,\n    \"startDate\": \"2026-07-01\",\n    \"endDate\": \"2026-12-01\",\n    \"status\": \"Active\",\n    \"objectives\": \"Build 5,000 sqm cold-storage warehouse.\",\n    \"milestones\": [\"Earthworks\", \"Structure\", \"Cooling\", \"Handover\"]\n  },\n  \"initialTasks\": [\n    { \"name\": \"Site survey\", \"assignee\": \"Site Engineer A\", \"dueDate\": \"2026-07-10\", \"status\": \"Pending\", \"priority\": \"High\", \"description\": \"Topographic survey\" },\n    { \"name\": \"Procure rebar\", \"assignee\": \"Procurement Lead\", \"dueDate\": \"2026-07-20\", \"status\": \"Pending\", \"priority\": \"Critical\", \"description\": \"Order 5 tons of rebar\" }\n  ],\n  \"initialAllocations\": [\n    { \"taskIndex\": 1, \"resourceId\": \"{{resourceId}}\", \"quantity\": 1500 }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/compositions/project-kickoff",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "compositions", "project-kickoff"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
