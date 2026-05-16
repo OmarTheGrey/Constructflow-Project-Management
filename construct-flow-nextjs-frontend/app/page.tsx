@@ -42,7 +42,12 @@ function HomeContent() {
   const renderSection = () => {
     switch (currentSection) {
       case "dashboard":
-        return <Dashboard onNewProject={() => openModal("new-project")} />
+        return (
+          <Dashboard
+            onNewProject={() => openModal("new-project")}
+            onOpenReport={() => openModal("global-report")}
+          />
+        )
       case "projects":
         return <ProjectsSection
           onNewProject={() => openModal("new-project")}
@@ -74,7 +79,12 @@ function HomeContent() {
       case "announcements":
         return <AnnouncementBoard />
       default:
-        return <Dashboard onNewProject={() => openModal("new-project")} />
+        return (
+          <Dashboard
+            onNewProject={() => openModal("new-project")}
+            onOpenReport={() => openModal("global-report")}
+          />
+        )
     }
   }
 
@@ -109,7 +119,11 @@ function HomeContent() {
       <Sidebar currentSection={currentSection} onNavigate={setCurrentSection} />
       <main className="flex-1 overflow-auto">{renderSection()}</main>
 
-      <Modal isOpen={modal.isOpen} onClose={closeModal}>
+      <Modal
+        isOpen={modal.isOpen}
+        onClose={closeModal}
+        widthClass={modal.type === "global-report" ? "max-w-4xl" : "max-w-2xl"}
+      >
         {renderModalContent()}
       </Modal>
     </div>

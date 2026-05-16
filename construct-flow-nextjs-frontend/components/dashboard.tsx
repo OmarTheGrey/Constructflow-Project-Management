@@ -2,15 +2,17 @@
 
 import { useApp } from "@/lib/app-context"
 import { FileText, AlertCircle } from "lucide-react"
-import { useState } from "react"
-import { ReportModal } from "./report-modal"
 import { ProjectTimeline } from "./project-timeline"
 import { TaskOverview } from "./task-overview"
 import { ResourceStatus } from "./resource-status"
 
-export function Dashboard({ onNewProject }: { onNewProject: () => void }) {
+interface DashboardProps {
+  onNewProject: () => void
+  onOpenReport: () => void
+}
+
+export function Dashboard({ onNewProject, onOpenReport }: DashboardProps) {
   const { projects, tasks, resources } = useApp()
-  const [showReport, setShowReport] = useState(false)
 
   const activeProjects = projects.filter((p) => p.status === "Active").length
   const onScheduleCount = projects.filter((p) => p.progress >= 70).length
@@ -21,7 +23,6 @@ export function Dashboard({ onNewProject }: { onNewProject: () => void }) {
 
   return (
     <div className="p-8 space-y-8">
-      {showReport && <ReportModal onClose={() => setShowReport(false)} />}
       <div className="flex justify-between items-start">
         <div>
           <h1 className="text-3xl font-bold text-foreground">Projects Dashboard</h1>
@@ -29,7 +30,7 @@ export function Dashboard({ onNewProject }: { onNewProject: () => void }) {
         </div>
         <div className="flex gap-3">
           <button
-            onClick={() => setShowReport(true)}
+            onClick={onOpenReport}
             className="px-4 py-2 bg-slate-100 text-foreground border border-slate-200 rounded-lg hover:bg-slate-200 transition-colors font-medium flex items-center gap-2"
           >
             <FileText size={18} /> Generate Report

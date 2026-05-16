@@ -1,9 +1,8 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useApp } from "@/lib/app-context"
 import { ReportService } from "@/lib/api-service"
-import { X, Printer } from "lucide-react"
+import { Printer } from "lucide-react"
 
 interface ExecutiveSummary {
     totalProjects: number
@@ -16,11 +15,7 @@ interface ExecutiveSummary {
     recentActivities: string[]
 }
 
-interface ReportModalProps {
-    onClose: () => void
-}
-
-export function ReportModal({ onClose }: ReportModalProps) {
+export function ReportModal({ onClose: _onClose }: { onClose: () => void }) {
     const [summary, setSummary] = useState<ExecutiveSummary | null>(null)
     const [loading, setLoading] = useState(true)
 
@@ -38,32 +33,26 @@ export function ReportModal({ onClose }: ReportModalProps) {
         fetchReport()
     }, [])
 
+    // No own overlay - this component is always rendered inside <Modal widthClass="max-w-4xl">,
+    // which provides backdrop + close button. Render only the report body.
     if (loading) {
-        return (
-            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                <div className="bg-card p-6 rounded-lg text-foreground">Loading Report...</div>
-            </div>
-        )
+        return <div className="p-6 text-foreground">Loading Report...</div>
     }
 
-    if (!summary) return null
+    if (!summary) {
+        return <div className="p-6 text-foreground">No report data available.</div>
+    }
 
     return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <div className="bg-card w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-lg shadow-2xl border border-border">
+        <div>
                 <div className="p-6 border-b border-border flex justify-between items-center bg-muted/20">
                     <div>
                         <h2 className="text-2xl font-bold text-foreground">Executive Summary Report</h2>
                         <p className="text-muted-foreground">Generated on {new Date().toLocaleDateString()}</p>
                     </div>
-                    <div className="flex gap-2">
-                        <button onClick={() => window.print()} className="p-2 hover:bg-muted rounded-full">
-                            <Printer size={20} className="text-foreground" />
-                        </button>
-                        <button onClick={onClose} className="p-2 hover:bg-muted rounded-full">
-                            <X size={24} className="text-foreground" />
-                        </button>
-                    </div>
+                    <button onClick={() => window.print()} className="p-2 hover:bg-muted rounded-full">
+                        <Printer size={20} className="text-foreground" />
+                    </button>
                 </div>
 
                 <div className="p-8 space-y-8">
@@ -122,7 +111,6 @@ export function ReportModal({ onClose }: ReportModalProps) {
                 <div className="p-6 bg-muted/20 border-t border-border text-center text-sm text-muted-foreground">
                     ConstructFlow Project Management System • Confidential
                 </div>
-            </div>
         </div>
     )
 }
