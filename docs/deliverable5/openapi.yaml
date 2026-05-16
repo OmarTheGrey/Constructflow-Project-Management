@@ -318,8 +318,8 @@ paths:
       responses:
         '200':
           description: Allocated
-        '409':
-          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
 
   /api/resources/{id}/inventory:
     parameters:
@@ -800,7 +800,7 @@ components:
       content:
         application/json:
           schema: { $ref: '#/components/schemas/ApiError' }
-    Conflict:
+    UnprocessableEntity:
       description: Business-rule violation (e.g. insufficient inventory)
       content:
         application/json:
@@ -809,12 +809,16 @@ components:
   schemas:
     ApiError:
       type: object
+      description: Shape produced by GlobalExceptionHandler.
       properties:
-        timestamp: { type: string, format: date-time }
-        status:    { type: integer }
-        error:     { type: string }
+        status:    { type: integer, description: HTTP status code (mirrors response status). }
         message:   { type: string }
-        path:      { type: string }
+        timestamp: { type: string, format: date-time }
+        errors:
+          type: object
+          additionalProperties: { type: string }
+          nullable: true
+          description: Field-name -> validation-message map, populated only for 400 responses to PUT/POST with @Valid bodies.
 
     # ---- Project ----
     ProjectRequest:
