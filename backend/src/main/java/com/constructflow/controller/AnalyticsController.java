@@ -18,7 +18,9 @@ public class AnalyticsController {
     }
 
     @GetMapping("/advanced")
-    public ResponseEntity<Map<String, Object>> getAdvancedStats() {
-        return ResponseEntity.ok(analyticsService.getAdvancedStats());
+    public ResponseEntity<Map<String, Object>> getAdvancedStats(
+            @RequestParam(required = false) String location,
+            @RequestParam(required = false) String category) {
+        return ResponseEntity.ok(analyticsService.getAdvancedStats(location, category));
     }
 }

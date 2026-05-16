@@ -68,15 +68,21 @@ public class AnalyticsService {
         return stats;
     }
 
-    public Map<String, Object> getAdvancedStats() {
+    public Map<String, Object> getAdvancedStats(String location, String category) {
         Map<String, Object> stats = new HashMap<>();
-        stats.put("totalBudget",          projectRepository.getTotalBudget());
-        stats.put("avgActualCost",        projectRepository.getAverageActualCost());
-        stats.put("highValueProjects",    projectRepository.findHighValueProjects());
-        stats.put("expensiveTasks",       taskRepository.findExpensiveTasks());
+        stats.put("totalBudget",            projectRepository.getTotalBudget());
+        stats.put("avgActualCost",          projectRepository.getAverageActualCost());
+        stats.put("highValueProjects",      projectRepository.findHighValueProjects());
+        stats.put("expensiveTasks",         taskRepository.findExpensiveTasks());
         stats.put("activeProjectResources", resourceRepository.findResourcesInActiveProjects());
-        stats.put("logsByLocation",       dailyLogRepository.findLogsByProjectLocation("New York"));
-        stats.put("tasksWithMaterial",    dailyLogRepository.findTasksUsingResourceCategory("Material"));
+        // Location and category are caller-supplied; when omitted we skip those
+        // joins instead of silently returning results for a hard-coded city.
+        stats.put("logsByLocation", (location == null || location.isBlank())
+                ? java.util.Collections.emptyList()
+                : dailyLogRepository.findLogsByProjectLocation(location));
+        stats.put("tasksWithCategory", (category == null || category.isBlank())
+                ? java.util.Collections.emptyList()
+                : dailyLogRepository.findTasksUsingResourceCategory(category));
         return stats;
     }
 }

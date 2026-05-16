@@ -756,6 +756,17 @@ paths:
     get:
       tags: [Analytics Service]
       summary: Advanced analytics
+      parameters:
+        - name: location
+          in: query
+          required: false
+          schema: { type: string }
+          description: Project location filter. When omitted, logsByLocation returns an empty list.
+        - name: category
+          in: query
+          required: false
+          schema: { type: string }
+          description: Resource category filter. When omitted, tasksWithCategory returns an empty list.
       responses:
         '200':
           description: OK
